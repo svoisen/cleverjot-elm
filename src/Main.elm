@@ -1,14 +1,13 @@
 
 module Main exposing (..)
 
-import Commands exposing (fetchNotes)
+import Command.Note as NoteCommands exposing (fetch)
 import Html exposing (program)
-import Messages exposing (Msg)
-import Models exposing (AppModel, initialAppModel)
-import Update exposing (update)
-import Views exposing (view)
+import Model.Model exposing (Model, Msg, initialModel)
+import Update.Update exposing (update)
+import View.View exposing (view)
 
-main : Program Never AppModel Msg
+main : Program Never Model Msg
 main = 
     program
         { init = init
@@ -17,10 +16,6 @@ main =
         , subscriptions = \_ -> Sub.none
         }
 
-init : (AppModel, Cmd Msg)
+init : (Model, Cmd Msg)
 init =
-    let 
-        model = initialAppModel
-        cmd = fetchNotes
-    in
-        (model, cmd)
+    (initialModel, NoteCommands.fetch)
