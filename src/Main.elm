@@ -4,24 +4,28 @@ module Main exposing (..)
 import Html exposing (..)
 import Json.Decode exposing (Value)
 import Navigation exposing (Location, programWithFlags)
--- import Ports
-import Route exposing (Route, fromLocation)
-import Page.Home exposing (Model, initialModel)
-import Page.Login exposing (Model, initialModel)
-import Page.Notes exposing (Model, initialModel)
-import Messages exposing (..)
+import Ports
+import Route exposing (..)
+import Page.Home as Home 
+import Page.Login as Login
+import Page.Notes as Notes
 import View.Frame exposing (frame)
 
 
 {- Data type used in the model to represent the current page. This is not to be
 confused with the Page modules for each of these corresponding pages. -}
 type Page
-    = Blank
-    | NotFound
-    | Home Page.Home.Model
-    | Login Page.Login.Model
-    | Notes Page.Notes.Model
-    | Logout
+    = BlankPage
+    | NotFoundPage
+    | HomePage Home.Model
+    | LoginPage Login.Model
+    | NotesPage Notes.Model
+    | LogoutPage
+    
+    
+type Msg
+    = SetRouteMsg (Maybe Route)
+    | LoginMsg Login.Msg
     
 
 {- The main data model. Each page has its own sub-model for representing state
@@ -37,54 +41,69 @@ setRoute maybeRoute model =
         Nothing ->
             (model, Cmd.none)
             
-        Just Route.Login ->
-            ({ model | currentPage = Login Page.Login.initialModel }, Cmd.none)
+        Just LoginRoute ->
+            ({ model | currentPage = LoginPage Login.initialModel }, Cmd.none)
         
-        Just Route.Logout ->
+        Just LogoutRoute ->
             (model, Cmd.none)
             
-        Just Route.Home ->
-            ({ model | currentPage = Home Page.Home.initialModel }, Cmd.none)
+        Just HomeRoute ->
+            ({ model | currentPage = HomePage Home.initialModel }, Cmd.none)
             
-        Just Route.Notes ->
-            ({ model | currentPage = Notes Page.Notes.initialModel }, Cmd.none) 
+        Just NotesRoute ->
+            ({ model | currentPage = NotesPage Notes.initialModel }, Cmd.none) 
         
     
 updatePage : Page -> Msg -> Model -> (Model, Cmd Msg)
 updatePage page msg model =
     case (msg, page) of
-        (SetRoute route, _) ->
+        (SetRouteMsg route, _) ->
             setRoute route model
+            
+        (LoginMsg pageMsg, LoginPage pageModel) ->
+            let 
+                ((newPageModel, _), msgFromPage) = Login.update pageMsg pageModel
+                
+            in
+                case msgFromPage of
+                    Login.NoOpMsg ->
+                        ({ model | currentPage = LoginPage newPageModel }, Cmd.none)
+                        
+                    Login.LoginUserMsg credentials ->
+                        ({ model | currentPage = LoginPage newPageModel }, Ports.login credentials)
             
         (_, _) ->
             (model, Cmd.none)
 
 
-        
 initialPage : Page
 initialPage = 
-    Blank
+    BlankPage
     
     
 viewPage : Page -> Html Msg
 viewPage page =
     case page of
-        NotFound ->
+        NotFoundPage ->
             Html.text ""
             
-        Blank ->
+        BlankPage ->
             Html.text ""
             
-        Home pageModel ->
-            Page.Home.view pageModel |> frame
+        HomePage homeModel ->
+            Home.view homeModel 
+                |> frame
             
-        Notes pageModel ->
-            Page.Notes.view pageModel |> frame
+        NotesPage notesModel ->
+            Notes.view notesModel 
+                |> frame
             
-        Login pageModel ->
-            Page.Login.view pageModel |> frame
+        LoginPage loginModel ->
+            Login.view loginModel 
+                |> frame
+                |> Html.map LoginMsg
             
-        Logout ->
+        LogoutPage ->
             Html.text ""
     
 
@@ -107,7 +126,7 @@ init val location =
  
 main : Program Value Model Msg
 main = 
-    Navigation.programWithFlags (Route.fromLocation >> SetRoute)
+    Navigation.programWithFlags (Route.fromLocation >> SetRouteMsg)
         { init = init
         , view = view
         , update = update

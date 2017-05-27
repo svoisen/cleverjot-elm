@@ -17,9 +17,13 @@ frame content =
         
 header : Html msg
 header =
-    div [ class "header" ] []
+    div [ class "header pure-g" ] 
+    [ div [ class "pure-u-1-1" ] 
+        [ h1 [] [ text "Mantra" ]
+        ]
+    ]
     
 
 footer : Html msg
 footer =
-    div [ class "footer" ] []
+    div [ class "footer pure-g" ] []

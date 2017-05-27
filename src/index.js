@@ -5,7 +5,6 @@ var Elm = require('./Main.elm'),
     
 require('firebase/auth');
 require('firebase/database');
-require('ace-css/css/ace.css');
 require('./index.html');
 
 var firebaseConfig = {
@@ -19,7 +18,29 @@ var firebaseConfig = {
     firebaseApp = firebase.initializeApp(firebaseConfig),
     mountNode = document.getElementById('main'),
     app = Elm.Main.embed(mountNode);
+    
+firebase.auth().onAuthStateChanged(function (user) {
+    if (user) {
+        console.log("Signed in");
+        console.log(user);
+    } else {
+        console.log("Signed out");
+    }
+});
 
-// app.ports.login.subscribe(function (credentials) {
-//     console.log(credentials);
-// });
+app.ports.login.subscribe(function (credentials) {
+    if (firebase.auth().currentUser) {
+        firebase.auth().signOut();
+    }
+    
+    firebase.auth().signInWithEmailAndPassword(credentials.email, credentials.password).catch(function (error) {
+        var errorCode = error.code,
+            errorMsg = error.message;
+            
+        if (errorCode === 'auth/wrong-password') {
+            console.log('Wrong password');
+        } else {
+            console.log(errorMsg);
+        }
+    });
+});
