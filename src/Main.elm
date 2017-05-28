@@ -4,7 +4,7 @@ module Main exposing (..)
 import Html exposing (..)
 import Json.Decode exposing (Value)
 import Navigation exposing (Location, programWithFlags)
-import Ports
+import Firebase
 import Route exposing (..)
 import Page.Home as Home 
 import Page.Login as Login
@@ -70,7 +70,7 @@ updatePage page msg model =
                         ({ model | currentPage = LoginPage newPageModel }, Cmd.none)
                         
                     Login.LoginUserMsg credentials ->
-                        ({ model | currentPage = LoginPage newPageModel }, Ports.login credentials)
+                        ({ model | currentPage = LoginPage newPageModel }, Firebase.login credentials)
             
         (_, _) ->
             (model, Cmd.none)
