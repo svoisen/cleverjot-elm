@@ -21,6 +21,13 @@ function initialize(firebaseConfig, elmApp) {
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
             console.log("Signed in");
+            let data = {
+                'type': 'userLogin',
+                'payload': {
+                    
+                }
+            }
+            ports.firebaseIncoming.send(data)
         } else {
             console.log("Signed out");
         }

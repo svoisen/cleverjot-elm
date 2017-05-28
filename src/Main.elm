@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 
+import Debug exposing (log)
 import Html exposing (..)
 import Json.Decode exposing (Value)
 import Navigation exposing (Location, programWithFlags)
@@ -26,6 +27,7 @@ type Page
 type Msg
     = SetRouteMsg (Maybe Route)
     | LoginMsg Login.Msg
+    | FirebaseMsg Firebase.Msg
     
 
 {- The main data model. Each page has its own sub-model for representing state
@@ -114,7 +116,17 @@ view model =
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
-    updatePage model.currentPage msg model
+    case msg of
+        FirebaseMsg firebaseMsg ->
+            case firebaseMsg of
+                Firebase.OnUserLoginMsg user ->
+                    log "YAY" (model, Cmd.none)
+                    
+                Firebase.NoOpMsg ->
+                    (model, Cmd.none)
+            
+        _ ->
+            updatePage model.currentPage msg model
             
             
 init : Value -> Location -> (Model, Cmd Msg)
@@ -122,6 +134,11 @@ init val location =
     setRoute (fromLocation location)
         { currentPage = initialPage 
         }
+        
+        
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Firebase.firebaseIncoming (Firebase.process >> FirebaseMsg)
 
  
 main : Program Value Model Msg
@@ -130,5 +147,5 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = subscriptions
         }
