@@ -1,4 +1,4 @@
-module Route exposing (Route(..), fromLocation)
+module Route exposing (Route(..), fromLocation, modifyUrl)
 
 
 import Navigation exposing (Location)
@@ -22,6 +22,31 @@ route =
         , Url.map LogoutRoute (s "logout")
         , Url.map NotesRoute (s "notes")
         ]
+        
+        
+routeToString : Route -> String
+routeToString route =
+    let components =
+        case route of
+            HomeRoute ->
+                []
+            
+            LoginRoute ->
+                [ "login" ]
+            
+            LogoutRoute ->
+                [ "logout" ]
+            
+            NotesRoute ->
+                [ "notes" ] 
+                
+    in
+        "#/" ++ (String.join "/" components)
+        
+        
+modifyUrl : Route -> Cmd msg
+modifyUrl =
+    routeToString >> Navigation.modifyUrl
     
     
 {-| Given a location, convert it to a route. -}

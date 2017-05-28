@@ -1,7 +1,9 @@
-module Data.User exposing (Credentials, User, makeCredentials, encodeCredentials)
+module Data.User exposing (..)
 
 
-import Json.Encode as Encode exposing (Value, object, string)
+import Json.Encode as Encode exposing (Value)
+import Json.Decode as Decode exposing (Decoder)
+import Json.Decode.Pipeline as Pipeline exposing (decode, required, optional)
 
 
 type alias Credentials = 
@@ -11,15 +13,23 @@ type alias Credentials =
     
     
 type alias User =
-    {
+    { email : String
+    , displayName : Maybe String
     }
+    
+    
+userDecoder : Decoder User
+userDecoder =
+    decode User
+        |> required "email" Decode.string
+        |> optional "displayName" (Decode.nullable Decode.string) Nothing
     
     
 encodeCredentials : Credentials -> Value
 encodeCredentials credentials =
-    object 
-        [ ("email", string credentials.email)
-        , ("password", string credentials.password)
+    Encode.object 
+        [ ("email", Encode.string credentials.email)
+        , ("password", Encode.string credentials.password)
         ]
     
     

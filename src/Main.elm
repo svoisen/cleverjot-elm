@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 
+import Data.User exposing (User)
 import Debug exposing (log)
 import Html exposing (..)
 import Json.Decode exposing (Value)
@@ -34,6 +35,7 @@ type Msg
 on that particular page. -}
 type alias Model =
     { currentPage : Page
+    , currentUser : Maybe User
     }
     
    
@@ -75,6 +77,16 @@ updatePage page msg model =
                         ({ model | currentPage = LoginPage newPageModel }, Firebase.login credentials)
             
         (_, _) ->
+            (model, Cmd.none)
+            
+            
+updateFirebase : Firebase.Msg -> Model -> (Model, Cmd Msg)
+updateFirebase firebaseMsg model =
+    case firebaseMsg of
+        Firebase.OnUserLoginMsg user ->
+            ({ model | currentUser = Just user }, Route.modifyUrl NotesRoute)
+            
+        Firebase.NoOpMsg ->
             (model, Cmd.none)
 
 
@@ -118,13 +130,10 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         FirebaseMsg firebaseMsg ->
-            case firebaseMsg of
-                Firebase.OnUserLoginMsg user ->
-                    log "YAY" (model, Cmd.none)
-                    
-                Firebase.NoOpMsg ->
-                    (model, Cmd.none)
+            updateFirebase firebaseMsg model
             
+        -- Assuming all other messages are for page updates, so route to the
+        -- page updater.
         _ ->
             updatePage model.currentPage msg model
             
@@ -133,6 +142,7 @@ init : Value -> Location -> (Model, Cmd Msg)
 init val location =
     setRoute (fromLocation location)
         { currentPage = initialPage 
+        , currentUser = Nothing
         }
         
         

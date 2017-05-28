@@ -23,9 +23,8 @@ function initialize(firebaseConfig, elmApp) {
             console.log("Signed in");
             let data = {
                 'type': 'userLogin',
-                'payload': {
-                    
-                }
+                'email': user.email,
+                'displayName': user.displayName
             }
             ports.firebaseIncoming.send(data)
         } else {

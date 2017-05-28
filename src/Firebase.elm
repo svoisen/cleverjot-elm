@@ -1,7 +1,7 @@
 port module Firebase exposing (Msg(..), process, login, firebaseIncoming)
 
 
-import Data.User exposing (Credentials, User, encodeCredentials)
+import Data.User as User exposing (Credentials, User, encodeCredentials, userDecoder)
 import Json.Encode as Encode exposing (encode, string, object)
 import Json.Decode as Decode exposing (Value)
 import Json.Decode.Pipeline as Pipeline
@@ -27,7 +27,15 @@ process value =
                 NoOpMsg
                 
             Ok "userLogin" ->
-                OnUserLoginMsg {}
+                let decodedUser =
+                    Decode.decodeValue userDecoder value
+                in
+                    case decodedUser of
+                        Err _ ->
+                            NoOpMsg
+                            
+                        Ok user ->
+                            OnUserLoginMsg user
                 
             Ok _ ->
                 NoOpMsg
