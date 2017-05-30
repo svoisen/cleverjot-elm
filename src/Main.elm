@@ -2,7 +2,6 @@ module Main exposing (..)
 
 
 import Data.User exposing (User)
-import Debug exposing (log)
 import Html exposing (..)
 import Json.Decode exposing (Value)
 import Navigation exposing (Location, programWithFlags)
@@ -95,8 +94,8 @@ initialPage =
     BlankPage
     
     
-viewPage : Page -> Html Msg
-viewPage page =
+viewPage : Page -> Maybe User -> Html Msg
+viewPage page maybeUser =
     case page of
         NotFoundPage ->
             Html.text ""
@@ -105,16 +104,13 @@ viewPage page =
             Html.text ""
             
         HomePage homeModel ->
-            Home.view homeModel 
-                |> frame
+            frame (Home.view homeModel) maybeUser
             
         NotesPage notesModel ->
-            Notes.view notesModel 
-                |> frame
+            frame (Notes.view notesModel) maybeUser
             
         LoginPage loginModel ->
-            Login.view loginModel 
-                |> frame
+            frame (Login.view loginModel) maybeUser
                 |> Html.map LoginMsg
             
         LogoutPage ->
@@ -123,7 +119,7 @@ viewPage page =
 
 view : Model -> Html Msg
 view model =
-    viewPage model.currentPage
+    viewPage model.currentPage model.currentUser
 
 
 update : Msg -> Model -> (Model, Cmd Msg)

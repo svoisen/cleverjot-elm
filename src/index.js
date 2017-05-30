@@ -1,6 +1,8 @@
 'use strict'
 
 require('./index.html');
+require('font-awesome/css/font-awesome.css');
+require('./Styles/main.scss');
 
 var firebaseConfig = {
         apiKey: "AIzaSyC3T9vEg7oHWpO1BRt4uSLRe9yuQ87pn_E",

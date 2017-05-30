@@ -15,10 +15,19 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        loader: 'babel-loader',
+        query: {
+          presets: ['es2015']
+        }
+      },
+      {
         test: /\.(css|scss)$/,
-        use: [
+        use: [ 
           'style-loader',
-          'css-loader',
+          'css-loader', 
+          'sass-loader' 
         ]
       },
       {
