@@ -4,7 +4,7 @@ module Page.Login exposing (Model, PublicMsg(..), Msg(..), view, initialModel, u
 import Debug exposing (log)
 import Data.User exposing (Credentials, makeCredentials)
 import Html exposing (..)
-import Html.Attributes exposing (class, placeholder)
+import Html.Attributes exposing (..)
 import Html.Events exposing (onSubmit, onInput)
 import View.Form as Form exposing (input, password)
 
@@ -51,20 +51,18 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "login-page page pure-g" ]
-    [ div [ class "pure-u-1-3" ] []
-    , loginForm
-    , div [ class "pure-u-1-3" ] []
+    div [ class "login-page page" ] 
+    [ loginForm
     ]
     
     
 loginForm : Html Msg
 loginForm =
-    div [ class "pure-u-1-3" ] 
-    [ Html.form [ class "pure-form pure-form-stacked login-form", onSubmit SubmitFormMsg ] 
-        [ h2 [] [ text "Sign in" ]
-        , Form.input [ placeholder "Email", onInput SetEmailMsg ] []
-        , Form.password [ placeholder "Password", onInput SetPasswordMsg ] []
-        , button [ class "pure-button pure-button-primary" ] [ text "Sign in" ]
+    Html.form [ class "pure-form pure-form-stacked login-form", onSubmit SubmitFormMsg ] 
+        [ h1 [ class "title" ] [ text "Sign in" ]
+        , label [ class "form-label", for "email" ] [ text "Email" ]
+        , Form.input [ id "email", onInput SetEmailMsg ] []
+        , label [ class "form-label", for "password" ] [ text "Password" ]
+        , Form.password [ id "password", onInput SetPasswordMsg ] []
+        , button [ class "pure-button pure-button-primary action-button" ] [ text "Sign in" ]
         ]
-    ]

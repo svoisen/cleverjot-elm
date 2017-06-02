@@ -1,0 +1,67 @@
+@import '~purecss-sass/vendor/assets/stylesheets/purecss/base'
+@import '~purecss-sass/vendor/assets/stylesheets/purecss/forms'
+@import '~purecss-sass/vendor/assets/stylesheets/purecss/buttons'
+
+@import 'colors'
+@import 'controls'
+@import 'login'
+
+$header-height: 60px
+
+.page
+    height: 100vh
+    margin: 0
+    padding: 1px 0 0 0
+    font-family: 'Open Sans', sans-serif
+    
+.header
+    position: absolute
+    top: 0
+    left: 0
+    right: 0
+    height: $header-height
+    background: $blue
+    
+    .hamburger
+        border: none
+        margin: 0
+        padding: 0
+        background: $blue
+        color: $white
+    
+    .hamburger:hover
+        background: $navy
+    
+    .search
+        margin: 10px
+        background: $light-blue
+        border-radius: 8px
+        color: $white
+        
+        input.search-input
+            height: $header-height - 20px
+            border: none
+            margin: 0 0 0 20px
+            padding: 0
+            line-height: $header-height - 20px
+            color: $white
+            background: transparent
+            
+        input.search-input::placeholder
+            color: transparentize($white, 0.2)
+        
+        input:focus
+            outline: none
+            
+            
+.footer
+    position: absolute
+    bottom: 20px
+    left: 0
+    right: 0
+    color: $medium-gray
+    font-size: 0.6rem
+    font-weight: 400
+    text-align: center
+    padding-top: 20px
+    border-top: 1px solid $light-gray

@@ -2,7 +2,7 @@
 
 require('./index.html');
 require('font-awesome/css/font-awesome.css');
-require('./Styles/main.scss');
+require('./styles/main.sass');
 
 var firebaseConfig = {
         apiKey: "AIzaSyC3T9vEg7oHWpO1BRt4uSLRe9yuQ87pn_E",
@@ -12,9 +12,9 @@ var firebaseConfig = {
         storageBucket: "mantra-8c5c7.appspot.com",
         messagingSenderId: "815268911169"
     },
-    Elm = require('./Main.elm'),
+    Elm = require('./elm/Main.elm'),
     firebase = require('./firebase-interface.js'),
-    mountNode = document.getElementById('main'),
+    mountNode = document.getElementById('app'),
     app = Elm.Main.embed(mountNode);
     
 firebase.initialize(firebaseConfig, app);

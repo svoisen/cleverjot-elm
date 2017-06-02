@@ -10,7 +10,6 @@ import Route exposing (..)
 import Page.Home as Home 
 import Page.Login as Login
 import Page.Notes as Notes
-import View.Frame exposing (frame)
 
 
 {- Data type used in the model to represent the current page. This is not to be
@@ -104,13 +103,13 @@ viewPage page maybeUser =
             Html.text ""
             
         HomePage homeModel ->
-            frame (Home.view homeModel) maybeUser
+            Home.view homeModel
             
         NotesPage notesModel ->
-            frame (Notes.view notesModel) maybeUser
+            Notes.view notesModel maybeUser
             
         LoginPage loginModel ->
-            frame (Login.view loginModel) maybeUser
+            Login.view loginModel 
                 |> Html.map LoginMsg
             
         LogoutPage ->
