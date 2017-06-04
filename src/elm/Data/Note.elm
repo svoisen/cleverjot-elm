@@ -1,58 +1,43 @@
 module Data.Note exposing 
-    ( NoteCollection
-    , Note
-    , NoteId
-    , addNote
+    ( Note
     , newNote
     , encodeNote
+    , noteDecoder
     )
 
 
 import Json.Encode as Encode exposing (Value, string)
-import RemoteData exposing (WebData)
-
-
-type alias NoteId = Maybe String
+import Json.Decode as Decode exposing (Decoder, nullable, string)
+import Json.Decode.Pipeline as Pipeline exposing (decode, optional, required)
+import Util.Encode as EncodeUtil exposing (maybeString)
 
 
 type alias Note =
-    { id : NoteId
+    { uid : Maybe String
+    , title : Maybe String
     , text : String
     }
     
     
-type alias NoteCollection 
-    = WebData (List Note)
-    
-    
 newNote : String -> Note
 newNote text =
-    { id = Nothing
+    { uid = Nothing
+    , title = Nothing
     , text = text
     }
     
     
-addNote : NoteCollection -> Note -> NoteCollection
-addNote notes note =
-    case notes of
-        RemoteData.Success a ->
-            RemoteData.map (\n -> note :: n) notes
-        
-        _ ->
-            RemoteData.Success [note]
-            
-            
 encodeNote : Note -> Value
 encodeNote note =
-    let encodedUid =
-        case note.id of
-            Nothing ->
-                Encode.null
-                
-            Just id ->
-                Encode.string id
-    in
-        Encode.object
-            [ ("uid", encodedUid)
-            , ("text", Encode.string note.text)
-            ]
+    Encode.object
+        [ ("uid", EncodeUtil.maybeString note.uid)
+        , ("text", Encode.string note.text)
+        ]
+            
+
+noteDecoder : Decoder Note
+noteDecoder =
+    Pipeline.decode Note
+        |> optional "uid" (Decode.nullable Decode.string) Nothing
+        |> optional "title" (Decode.nullable Decode.string) Nothing
+        |> required "text" Decode.string

@@ -104,6 +104,18 @@ updateFirebase firebaseMsg model =
         Firebase.OnUserLoginMsg user ->
             ({ model | currentUser = Just user }, Route.modifyUrl NotesRoute)
             
+        Firebase.OnNoteAddedMsg note ->
+            case model.currentPage of
+                NotesPage pageModel ->
+                    let
+                        ((newPageModel, _), msgFromPage) = Notes.update (Notes.OnNoteAddedMsg note) pageModel
+                    in
+                        ({ model | currentPage = NotesPage newPageModel }, Cmd.none)
+                        
+                _ ->
+                    (model, Cmd.none)
+                
+            
         Firebase.NoOpMsg ->
             (model, Cmd.none)
 

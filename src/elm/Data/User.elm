@@ -21,7 +21,7 @@ type alias User =
     
 userDecoder : Decoder User
 userDecoder =
-    decode User
+    Pipeline.decode User
         |> required "email" Decode.string
         |> required "uid" Decode.string
         |> optional "displayName" (Decode.nullable Decode.string) Nothing

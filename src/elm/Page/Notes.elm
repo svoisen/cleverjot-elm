@@ -11,9 +11,9 @@ module Page.Notes exposing
 import Debug exposing (log)
 import Html exposing (..)
 import Html.Attributes exposing (class)
-import Data.Note exposing (NoteCollection, Note, newNote)
+import Data.Note exposing (Note, newNote)
 import Data.User exposing (User)
-import RemoteData exposing (WebData)
+import Firebase
 import View.App as App exposing (header)
 import View.Notes exposing (notesList)
 import Util.Html exposing (onEnter)
@@ -26,10 +26,11 @@ type PublicMsg
 
 type Msg
     = OnSearchEnterMsg String
+    | OnNoteAddedMsg Note
     
     
 type alias Model =
-    { notes : NoteCollection
+    { notes : List Note
     , query : Maybe String
     }
     
@@ -44,10 +45,13 @@ update msg model =
             in
                 log query (({ model | query = Nothing }, Cmd.none), AddNoteMsg note)
                 
+        OnNoteAddedMsg note ->
+            (({ model | notes = note :: model.notes }, Cmd.none), NoOpMsg)
+                
 
 initialModel : Model
 initialModel =
-    { notes = RemoteData.NotAsked 
+    { notes = []
     , query = Nothing
     }
 
