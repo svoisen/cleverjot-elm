@@ -1,4 +1,30 @@
 @import 'colors'
 
-.notes-list
+.notes-view
+    position: absolute
+    top: 0
+    left: 0
+    bottom: 0
+    width: 360px
     background: $light-gray
+
+    .notes-list
+        list-style: none
+        margin: 0
+        padding: 0
+        color: $dark-gray
+        
+        .notes-list-item
+            border-top: 1px solid $medium-gray
+            padding: 15px;
+            margin: 0
+            font-size: 0.8rem
+            
+        .notes-list-item:first-child
+            border-top: none
+            
+        .notes-list-item:hover
+            cursor: pointer
+            color: $white
+            background: $medium-gray
+        

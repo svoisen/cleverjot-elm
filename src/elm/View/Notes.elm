@@ -1,19 +1,34 @@
-module View.Notes exposing (notesList)
+module View.Notes exposing 
+    ( notesView
+    , noteEditor
+    )
 
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 import Data.Note exposing (Note)
+import Util.Helpers exposing ((?))
 
 
--- Given a collection of notes, display them in a list.
-notesList : List Note -> Html msg
-notesList notes =
-    div [ class "notes-list pure-u-1-3" ] 
-    [ ul [] (List.map noteView notes)
+{-| Given a list of notes, display them in a list. -}
+notesView : List Note -> (Note -> msg) -> Html msg
+notesView notes noteClick =
+    div [ class "notes-view" ] 
+    [ ul [ class "notes-list" ] (List.map (\note -> noteView note noteClick) notes)
     ]
             
 
-noteView : Note -> Html msg
-noteView note =
-    li [ class "notes-list-item" ] [ text note.text ]
+noteView : Note -> (Note -> msg) -> Html msg
+noteView note noteClick =
+    li [ class "notes-list-item", onClick (noteClick note) ] [ text note.text ]
+    
+    
+noteEditor : Maybe Note -> Html msg
+noteEditor maybeNote =
+    case maybeNote of
+        Nothing ->
+            Html.text ""
+            
+        Just note ->
+            textarea [ class "note-editor" ] [ text note.text ]

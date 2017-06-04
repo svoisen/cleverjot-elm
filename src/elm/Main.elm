@@ -10,6 +10,7 @@ import Route exposing (..)
 import Page.Home as Home 
 import Page.Login as Login
 import Page.Notes as Notes
+import Util.Helpers exposing ((=>))
 
 
 {- Data type used in the model to represent the current page. This is not to be
@@ -45,16 +46,16 @@ setRoute maybeRoute model =
             (model, Cmd.none)
             
         Just LoginRoute ->
-            ({ model | currentPage = LoginPage Login.initialModel }, Cmd.none)
+            { model | currentPage = LoginPage Login.initialModel } => Cmd.none
         
         Just LogoutRoute ->
             (model, Cmd.none)
             
         Just HomeRoute ->
-            ({ model | currentPage = HomePage Home.initialModel }, Cmd.none)
+            { model | currentPage = HomePage Home.initialModel } => Cmd.none
             
         Just NotesRoute ->
-            ({ model | currentPage = NotesPage Notes.initialModel }, Cmd.none) 
+            { model | currentPage = NotesPage Notes.initialModel } => Cmd.none 
         
     
 updatePage : Page -> Msg -> Model -> (Model, Cmd Msg)
@@ -65,35 +66,37 @@ updatePage page msg model =
             
         (LoginMsg pageMsg, LoginPage pageModel) ->
             let 
-                ((newPageModel, _), msgFromPage) = Login.update pageMsg pageModel
-                
+                ((newPageModel, _), msgFromPage) 
+                    = Login.update pageMsg pageModel
             in
                 case msgFromPage of
                     Login.NoOpMsg ->
-                        ({ model | currentPage = LoginPage newPageModel }, Cmd.none)
+                        { model | currentPage = LoginPage newPageModel } => Cmd.none
                         
                     Login.LoginUserMsg credentials ->
-                        ({ model | currentPage = LoginPage newPageModel }, Firebase.login credentials)
+                        { model | currentPage = LoginPage newPageModel } => Firebase.login credentials
                         
         (NotesMsg pageMsg, NotesPage pageModel) ->
             let
-                ((newPageModel, _), msgFromPage) = Notes.update pageMsg pageModel
-            
+                ((newPageModel, _), msgFromPage) 
+                    = Notes.update pageMsg pageModel
+                newModel 
+                    = { model | currentPage = NotesPage newPageModel }
             in
                 case msgFromPage of
                     Notes.NoOpMsg ->
-                        ({ model | currentPage = NotesPage newPageModel }, Cmd.none)
+                        newModel => Cmd.none
                     
                     Notes.AddNoteMsg note ->
                         case model.currentUser of
                             Nothing ->
-                                ({ model | currentPage = NotesPage newPageModel}, Cmd.none)
+                                newModel => Cmd.none
                                 
                             Just user ->
-                                ({ model | currentPage = NotesPage newPageModel }, Firebase.addNote note user)
+                                newModel => Firebase.addNote note user
             
         (_, _) ->
-            (model, Cmd.none)
+            model => Cmd.none
             
             
 {-| Called in response to incoming port messages from the Firebase module in

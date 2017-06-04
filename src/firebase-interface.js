@@ -55,6 +55,7 @@ function initializeDatabaseObservers(user) {
         let message = {
             'type': NOTE_ADDED_MSG,
             'note': {
+                'uid': data.key,
                 'text': data.val().text
             }
         };

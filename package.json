@@ -10,6 +10,7 @@
     "font-awesome": "^4.7.0",
     "node-sass": "^4.5.3",
     "purecss-sass": "^0.6.2",
+    "quill": "^1.2.5",
     "sass-loader": "^6.0.5",
     "style-loader": "^0.18.0",
     "url-loader": "^0.5.8",
