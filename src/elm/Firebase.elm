@@ -1,7 +1,8 @@
-port module Firebase exposing (Msg(..), process, login, firebaseIncoming)
+port module Firebase exposing (Msg(..), process, login, addNote, firebaseIncoming)
 
 
-import Data.User as User exposing (Credentials, User, encodeCredentials, userDecoder)
+import Data.User as User exposing (Credentials, User, encodeCredentials, encodeUser, userDecoder)
+import Data.Note as Note exposing (Note, encodeNote)
 import Json.Encode as Encode exposing (encode, string, object)
 import Json.Decode as Decode exposing (Value)
 import Json.Decode.Pipeline as Pipeline
@@ -10,6 +11,13 @@ import Json.Decode.Pipeline as Pipeline
 type Msg
     = NoOpMsg
     | OnUserLoginMsg User
+    
+    
+type PortMsgType
+    = UserLoginRequest
+    | UserDidLogin
+    | AddNote
+    | NoMsg
 
 
 port firebaseOutgoing : String -> Cmd msg
@@ -26,7 +34,7 @@ process value =
             Err _ ->
                 NoOpMsg
                 
-            Ok "userLogin" ->
+            Ok "userDidLogin" ->
                 let decodedUser =
                     Decode.decodeValue userDecoder value
                 in
@@ -44,9 +52,51 @@ process value =
 login : Credentials -> Cmd msg
 login credentials =
     let message =
-        object
-            [ ("type", string "login")
-            , ("payload", encodeCredentials credentials)
+        ("type", Encode.string (toString UserLoginRequest)) :: (encodeCredentials credentials)
+            |> Encode.object
+    in
+        encode 0 message |> firebaseOutgoing
+        
+        
+addNote : Note -> User -> Cmd msg
+addNote note user =
+    let message =
+        Encode.object
+            [ ("type", Encode.string (toString AddNote))
+            , ("note", encodeNote note) 
+            , ("user", encodeUser user)
             ]
     in
         encode 0 message |> firebaseOutgoing
+        
+        
+toString : PortMsgType -> String
+toString msg =
+    case msg of
+        UserLoginRequest ->
+            "userLogin"
+            
+        UserDidLogin ->
+            "userDidLogin"
+            
+        AddNote ->
+            "addNote"
+            
+        NoMsg ->
+            ""
+            
+            
+fromString : String -> PortMsgType
+fromString str =
+    case str of
+        "userLogin" ->
+            UserLoginRequest
+            
+        "userDidLogin" ->
+            UserDidLogin
+            
+        "addNote" ->
+            AddNote
+            
+        _ ->
+            NoMsg

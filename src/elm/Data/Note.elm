@@ -1,6 +1,14 @@
-module Data.Note exposing (NoteCollection, Note, NoteId, addNote, newNote)
+module Data.Note exposing 
+    ( NoteCollection
+    , Note
+    , NoteId
+    , addNote
+    , newNote
+    , encodeNote
+    )
 
 
+import Json.Encode as Encode exposing (Value, string)
 import RemoteData exposing (WebData)
 
 
@@ -32,3 +40,19 @@ addNote notes note =
         
         _ ->
             RemoteData.Success [note]
+            
+            
+encodeNote : Note -> Value
+encodeNote note =
+    let encodedUid =
+        case note.id of
+            Nothing ->
+                Encode.null
+                
+            Just id ->
+                Encode.string id
+    in
+        Encode.object
+            [ ("uid", encodedUid)
+            , ("text", Encode.string note.text)
+            ]

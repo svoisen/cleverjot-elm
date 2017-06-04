@@ -1,10 +1,12 @@
 @import '~purecss-sass/vendor/assets/stylesheets/purecss/base'
+@import '~purecss-sass/vendor/assets/stylesheets/purecss/grids'
 @import '~purecss-sass/vendor/assets/stylesheets/purecss/forms'
 @import '~purecss-sass/vendor/assets/stylesheets/purecss/buttons'
 
 @import 'colors'
 @import 'controls'
 @import 'login'
+@import 'notes'
 
 $header-height: 60px
 
@@ -13,6 +15,10 @@ $header-height: 60px
     margin: 0
     padding: 1px 0 0 0
     font-family: 'Open Sans', sans-serif
+    
+    .app-page-body
+        height: calc(100vh - #{$header-height})
+        margin-top: $header-height
     
 .header
     position: absolute
@@ -23,25 +29,33 @@ $header-height: 60px
     background: $blue
     
     .hamburger
+        font-size: 1.6rem
+        display: inline-block
         border: none
-        margin: 0
-        padding: 0
+        text-align: center
+        width: $header-height
+        height: $header-height
+        line-height: $header-height
         background: $blue
         color: $white
     
     .hamburger:hover
-        background: $navy
+        background: darken($blue, 10%)
     
     .search
+        float: right
+        width: calc(100% - #{$header-height} - 20px)
         margin: 10px
         background: $light-blue
-        border-radius: 8px
         color: $white
+        
+        .loupe
+            margin-left: 15px
         
         input.search-input
             height: $header-height - 20px
             border: none
-            margin: 0 0 0 20px
+            margin: 0 0 0 15px
             padding: 0
             line-height: $header-height - 20px
             color: $white
@@ -50,7 +64,7 @@ $header-height: 60px
         input.search-input::placeholder
             color: transparentize($white, 0.2)
         
-        input:focus
+        input.search-input:focus
             outline: none
             
             

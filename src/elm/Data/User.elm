@@ -14,6 +14,7 @@ type alias Credentials =
     
 type alias User =
     { email : String
+    , uid : String
     , displayName : Maybe String
     }
     
@@ -22,14 +23,22 @@ userDecoder : Decoder User
 userDecoder =
     decode User
         |> required "email" Decode.string
+        |> required "uid" Decode.string
         |> optional "displayName" (Decode.nullable Decode.string) Nothing
     
     
-encodeCredentials : Credentials -> Value
+encodeCredentials : Credentials -> List (String, Value)
 encodeCredentials credentials =
-    Encode.object 
-        [ ("email", Encode.string credentials.email)
-        , ("password", Encode.string credentials.password)
+    [ ("email", Encode.string credentials.email)
+    , ("password", Encode.string credentials.password)
+    ]
+    
+    
+encodeUser : User -> Value
+encodeUser user =
+    Encode.object
+        [ ("email", Encode.string user.email)
+        , ("uid", Encode.string user.uid)
         ]
     
     

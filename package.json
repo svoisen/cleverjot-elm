@@ -9,7 +9,6 @@
     "firebase": "^4.0.0",
     "font-awesome": "^4.7.0",
     "node-sass": "^4.5.3",
-    "normalize-scss": "^7.0.0",
     "purecss-sass": "^0.6.2",
     "sass-loader": "^6.0.5",
     "style-loader": "^0.18.0",

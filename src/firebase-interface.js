@@ -8,7 +8,11 @@ function initialize(firebaseConfig, elmApp) {
         let parsedMessage = JSON.parse(message);
         switch (parsedMessage.type) {
             case 'login':
-                handleLoginRequest(parsedMessage.payload);
+                handleLoginRequest(parsedMessage);
+                break;
+                
+            case 'addNote':
+                handleAddNote(parsedMessage);
                 break;
             
             default:
@@ -20,11 +24,11 @@ function initialize(firebaseConfig, elmApp) {
     
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
-            console.log("Signed in");
             let data = {
-                'type': 'userLogin',
+                'type': 'userDidLogin',
                 'email': user.email,
-                'displayName': user.displayName
+                'displayName': user.displayName,
+                'uid': user.uid
             }
             ports.firebaseIncoming.send(data)
         } else {
@@ -48,6 +52,10 @@ function handleLoginRequest(credentials) {
             console.log(errorMsg);
         }
     });
+}
+
+function handleAddNote(note) {
+    console.log(note);
 }
 
 module.exports = {

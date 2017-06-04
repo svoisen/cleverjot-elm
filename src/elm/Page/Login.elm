@@ -1,7 +1,6 @@
 module Page.Login exposing (Model, PublicMsg(..), Msg(..), view, initialModel, update)
 
 
-import Debug exposing (log)
 import Data.User exposing (Credentials, makeCredentials)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -19,7 +18,7 @@ type Msg
     | SetEmailMsg String
     | SetPasswordMsg String
     
-    
+        
 type alias Model =
     { email : String
     , password : String
@@ -37,10 +36,10 @@ update : Msg -> Model -> ((Model, Cmd Msg), PublicMsg)
 update msg model =
     case msg of
         SetEmailMsg value ->
-            log value (({ model | email = value }, Cmd.none), NoOpMsg)
+            (({ model | email = value }, Cmd.none), NoOpMsg)
         
         SetPasswordMsg value ->
-            log value (({ model | password = value }, Cmd.none), NoOpMsg)
+            (({ model | password = value }, Cmd.none), NoOpMsg)
         
         SubmitFormMsg ->
             let credentials = 

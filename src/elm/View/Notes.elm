@@ -1,4 +1,4 @@
-module View.Notes exposing (view)
+module View.Notes exposing (notesList)
 
 
 import Html exposing (..)
@@ -8,22 +8,26 @@ import RemoteData exposing (WebData)
 
 
 -- Given a collection of notes, display them in a list.
-view : NoteCollection -> Html msg
-view collection =
-    case collection of
-        RemoteData.NotAsked ->
-            p [] [ text "Initializing ..." ]
-            
-        RemoteData.Failure err ->
-            p [] [ text "Error" ]
-            
-        RemoteData.Loading ->
-            p [] [ text "Loading" ]
-            
-        RemoteData.Success notes ->
-            ul [ class "notes-list" ] (List.map noteView notes)
+notesList : NoteCollection -> Html msg
+notesList collection =
+    let contents = 
+        case collection of
+            RemoteData.NotAsked ->
+                p [] [ text "Initializing ..." ]
+                
+            RemoteData.Failure err ->
+                p [] [ text "Error" ]
+                
+            RemoteData.Loading ->
+                p [] [ text "Loading" ]
+                
+            RemoteData.Success notes ->
+                ul [] (List.map noteView notes)
+                
+    in
+        div [ class "notes-list pure-u-1-3" ] [ contents ]
             
 
 noteView : Note -> Html msg
 noteView note =
-    div [ class "note" ] [ text note.text ]
+    li [ class "notes-list-item" ] [ text note.text ]

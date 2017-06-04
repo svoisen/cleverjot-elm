@@ -26,6 +26,7 @@ type Page
 type Msg
     = SetRouteMsg (Maybe Route)
     | LoginMsg Login.Msg
+    | NotesMsg Notes.Msg
     | FirebaseMsg Firebase.Msg
     
 
@@ -73,11 +74,30 @@ updatePage page msg model =
                         
                     Login.LoginUserMsg credentials ->
                         ({ model | currentPage = LoginPage newPageModel }, Firebase.login credentials)
+                        
+        (NotesMsg pageMsg, NotesPage pageModel) ->
+            let
+                ((newPageModel, _), msgFromPage) = Notes.update pageMsg pageModel
+            
+            in
+                case msgFromPage of
+                    Notes.NoOpMsg ->
+                        ({ model | currentPage = NotesPage newPageModel }, Cmd.none)
+                    
+                    Notes.AddNoteMsg note ->
+                        case model.currentUser of
+                            Nothing ->
+                                ({ model | currentPage = NotesPage newPageModel}, Cmd.none)
+                                
+                            Just user ->
+                                ({ model | currentPage = NotesPage newPageModel }, Firebase.addNote note user)
             
         (_, _) ->
             (model, Cmd.none)
             
             
+{-| Called in response to incoming port messages from the Firebase module in
+order to handle incoming data from Firebase. -}
 updateFirebase : Firebase.Msg -> Model -> (Model, Cmd Msg)
 updateFirebase firebaseMsg model =
     case firebaseMsg of
@@ -107,6 +127,7 @@ viewPage page maybeUser =
             
         NotesPage notesModel ->
             Notes.view notesModel maybeUser
+                |> Html.map NotesMsg
             
         LoginPage loginModel ->
             Login.view loginModel 
