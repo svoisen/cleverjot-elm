@@ -1,5 +1,9 @@
 module Data.Note exposing 
     ( Note
+    , select
+    , deselect
+    , markDirty
+    , markClean
     , newNote
     , encodeNote
     , noteDecoder
@@ -16,6 +20,8 @@ type alias Note =
     { uid : Maybe String
     , title : Maybe String
     , text : String
+    , selected : Bool
+    , dirty : Bool
     }
     
     
@@ -24,13 +30,36 @@ newNote text =
     { uid = Nothing
     , title = Nothing
     , text = text
+    , selected = False
+    , dirty = False
     }
+    
+    
+select : Note -> Note
+select note =
+    { note | selected = True }
+    
+    
+deselect : Note -> Note
+deselect note =
+    { note | selected = False }
+    
+    
+markDirty : Note -> Note
+markDirty note =
+    { note | dirty = True }
+    
+    
+markClean : Note -> Note
+markClean note =
+    { note | dirty = False }
     
     
 encodeNote : Note -> Value
 encodeNote note =
     Encode.object
         [ ("uid", EncodeUtil.maybeString note.uid)
+        , ("title", EncodeUtil.maybeString note.title)
         , ("text", Encode.string note.text)
         ]
             
@@ -41,3 +70,5 @@ noteDecoder =
         |> optional "uid" (Decode.nullable Decode.string) Nothing
         |> optional "title" (Decode.nullable Decode.string) Nothing
         |> required "text" Decode.string
+        |> optional "selected" Decode.bool False
+        |> optional "dirty" Decode.bool False

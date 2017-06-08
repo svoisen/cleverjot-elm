@@ -8,19 +8,21 @@ module Page.Notes exposing
     )
 
 
-import Html exposing (..)
-import Html.Attributes exposing (class)
-import Data.Note exposing (Note, newNote)
+import Debug exposing (log)
+import Data.Note exposing (Note, newNote, select, deselect, markDirty, markClean)
 import Data.User exposing (User)
+import Dict exposing (Dict)
+import Html exposing (Html, div, section)
+import Html.Attributes exposing (class)
+import Util.Helpers exposing ((=>), (?))
 import View.App as App exposing (header)
 import View.Notes exposing (notesView, noteEditor)
-import Util.Html exposing (onEnter)
-import Util.Helpers exposing ((=>))
 
 
 type PublicMsg
     = NoOpMsg
     | AddNoteMsg Note
+    | NotesDirtiedMsg
 
 
 {-| Messages that are internal-only to this module -}
@@ -28,11 +30,13 @@ type Msg
     = OnSearchEnterMsg String
     | OnNoteAddedMsg Note
     | OnNoteSelectedMsg Note
+    | OnNoteChangedMsg Note 
+    | SaveDirtyNotesMsg
     
     
 type alias Model =
-    { notes : List Note
-    , selectedNote : Maybe Note
+    { notes : Dict String Note
+    , selectedNoteId : Maybe String
     , query : Maybe String
     }
     
@@ -44,16 +48,40 @@ update msg model =
             { model | query = Nothing } => Cmd.none => AddNoteMsg (newNote query)
                 
         OnNoteSelectedMsg note ->
-            { model | selectedNote = Just note } => Cmd.none => NoOpMsg
+            case note.uid of
+                Nothing ->
+                    { model | selectedNoteId = Nothing } => Cmd.none => NoOpMsg
+                    
+                Just uid ->
+                    { model | 
+                        notes = Dict.map (\k -> if k == uid then select else deselect) model.notes,
+                        selectedNoteId = note.uid
+                    } => Cmd.none => NoOpMsg
                 
         OnNoteAddedMsg note ->
-            { model | notes = note :: model.notes } => Cmd.none => NoOpMsg
+            case note.uid of
+                Nothing ->
+                    model => Cmd.none => NoOpMsg
+                    
+                Just uid ->
+                    { model | notes = Dict.insert uid note model.notes } => Cmd.none => NoOpMsg
+            
+        OnNoteChangedMsg note ->
+            case note.uid of
+                Nothing ->
+                    model => Cmd.none => NoOpMsg
+            
+                Just uid ->
+                    { model | notes = Dict.update uid (\_ -> Just (markDirty note)) model.notes } => Cmd.none => NotesDirtiedMsg
+                    
+        SaveDirtyNotesMsg ->
+            log "SAVE" (model => Cmd.none => NoOpMsg)
                 
 
 initialModel : Model
 initialModel =
-    { notes = []
-    , selectedNote = Nothing
+    { notes = Dict.empty 
+    , selectedNoteId = Nothing
     , query = Nothing
     }
 
@@ -61,10 +89,10 @@ initialModel =
 view : Model -> Maybe User -> Html Msg
 view model maybeUser =
     div [ class "notes-page page" ] 
-    [ App.header maybeUser model.query [ onEnter OnSearchEnterMsg ]
+    [ header maybeUser model.query OnSearchEnterMsg
     , section [ class "page-body" ]
-        [ notesView model.notes OnNoteSelectedMsg
-        , noteEditor model.selectedNote
+        [ notesView (Dict.values model.notes) OnNoteSelectedMsg
+        , noteEditor (Dict.get (model.selectedNoteId ? "") model.notes) OnNoteChangedMsg
         ]
     ]
     

@@ -1,12 +1,14 @@
 @import 'colors'
 
+$notes-view-width: 360px
+
 .notes-view
     position: absolute
     top: 0
     left: 0
     bottom: 0
-    width: 360px
-    background: $light-gray
+    width: $notes-view-width
+    background: $lightest-gray
 
     .notes-list
         list-style: none
@@ -15,16 +17,34 @@
         color: $dark-gray
         
         .notes-list-item
-            border-top: 1px solid $medium-gray
-            padding: 15px;
+            padding: 0
             margin: 0
+            cursor: pointer
             font-size: 0.8rem
+            padding: 15px
+            border-bottom: 1px solid $light-gray
             
-        .notes-list-item:first-child
-            border-top: none
+            p
+                margin: 0
+                padding: 0
             
         .notes-list-item:hover
-            cursor: pointer
+            background: $light-gray
+            
+        .notes-list-item.selected
             color: $white
             background: $medium-gray
+            border-left: 4px solid $cyan
+            
         
+.note-view
+    margin-left: $notes-view-width
+    padding: 15px
+    
+    .note-editor
+        width: 100%
+        height: 100%
+        border: none
+        
+    .note-editor:focus
+        outline: none

@@ -10,7 +10,7 @@ import Route exposing (..)
 import Page.Home as Home 
 import Page.Login as Login
 import Page.Notes as Notes
-import Util.Helpers exposing ((=>))
+import Util.Helpers exposing ((=>), delay)
 
 
 {- Data type used in the model to represent the current page. This is not to be
@@ -78,7 +78,7 @@ updatePage page msg model =
                         
         (NotesMsg pageMsg, NotesPage pageModel) ->
             let
-                ((newPageModel, _), msgFromPage) 
+                ((newPageModel, cmd), msgFromPage) 
                     = Notes.update pageMsg pageModel
                 newModel 
                     = { model | currentPage = NotesPage newPageModel }
@@ -94,6 +94,9 @@ updatePage page msg model =
                                 
                             Just user ->
                                 newModel => Firebase.addNote note user
+                                
+                    Notes.NotesDirtiedMsg ->
+                        newModel => (delay 2000 <| NotesMsg Notes.SaveDirtyNotesMsg)
             
         (_, _) ->
             model => Cmd.none

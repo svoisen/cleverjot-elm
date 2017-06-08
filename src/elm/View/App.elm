@@ -5,13 +5,14 @@ import Data.User exposing (User)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Util.Helpers exposing ((?))
+import Util.Html exposing (onEnter)
 
         
-header : Maybe User -> Maybe String -> List (Attribute msg) -> Html msg
-header maybeUser maybeQuery searchInputAttributes =
+header : Maybe User -> Maybe String -> (String -> msg) -> Html msg
+header maybeUser maybeQuery searchEnter =
     section [ class "header" ] 
     [ hamburgerMenu
-    , searchInput maybeQuery searchInputAttributes
+    , searchInput maybeQuery searchEnter
     ]
     
     
@@ -22,9 +23,9 @@ hamburgerMenu =
     ]
     
     
-searchInput : Maybe String -> List (Attribute msg) -> Html msg
-searchInput maybeQuery inputAttributes =
+searchInput : Maybe String -> (String -> msg) -> Html msg
+searchInput maybeQuery searchEnter =
     div [ class "search" ]
     [ span [ class "loupe fa fa-search" ] [ ]
-    , input ([ class "search-input", placeholder "Search or create note ...", value (maybeQuery ? "") ] ++ inputAttributes) [ ]
+    , input [ class "search-input", placeholder "Search or create note ...", value (maybeQuery ? ""), onEnter searchEnter ] [ ]
     ]
