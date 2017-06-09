@@ -1,15 +1,18 @@
 module Main exposing (..)
 
 
+import Debug exposing (log)
 import Data.User exposing (User)
+import Firebase.Auth as Auth
+import Firebase.Database as Database
 import Html exposing (..)
 import Json.Decode exposing (Value)
 import Navigation exposing (Location, programWithFlags)
-import Firebase
-import Route exposing (..)
 import Page.Home as Home 
 import Page.Login as Login
 import Page.Notes as Notes
+import Route exposing (..)
+import Time
 import Util.Helpers exposing ((=>), delay)
 
 
@@ -28,7 +31,8 @@ type Msg
     = SetRouteMsg (Maybe Route)
     | LoginMsg Login.Msg
     | NotesMsg Notes.Msg
-    | FirebaseMsg Firebase.Msg
+    | AuthMsg Auth.Msg
+    | DatabaseMsg Database.Msg
     
 
 {- The main data model. Each page has its own sub-model for representing state
@@ -74,7 +78,7 @@ updatePage page msg model =
                         { model | currentPage = LoginPage newPageModel } => Cmd.none
                         
                     Login.LoginUserMsg credentials ->
-                        { model | currentPage = LoginPage newPageModel } => Firebase.login credentials
+                        { model | currentPage = LoginPage newPageModel } => Auth.signIn credentials
                         
         (NotesMsg pageMsg, NotesPage pageModel) ->
             let
@@ -93,37 +97,33 @@ updatePage page msg model =
                                 newModel => Cmd.none
                                 
                             Just user ->
-                                newModel => Firebase.addNote note user
+                                newModel => Cmd.none
                                 
                     Notes.NotesDirtiedMsg ->
-                        newModel => (delay 2000 <| NotesMsg Notes.SaveDirtyNotesMsg)
+                        newModel => (delay (Time.second * 2) (NotesMsg Notes.SaveDirtyNotesMsg))
             
         (_, _) ->
             model => Cmd.none
             
             
-{-| Called in response to incoming port messages from the Firebase module in
-order to handle incoming data from Firebase. -}
-updateFirebase : Firebase.Msg -> Model -> (Model, Cmd Msg)
-updateFirebase firebaseMsg model =
-    case firebaseMsg of
-        Firebase.OnUserLoginMsg user ->
+updateAuth : Auth.Msg -> Model -> (Model, Cmd Msg)
+updateAuth msg model =
+    case msg of
+        Auth.OnUserSignInMsg user ->
             ({ model | currentUser = Just user }, Route.modifyUrl NotesRoute)
             
-        Firebase.OnNoteAddedMsg note ->
-            case model.currentPage of
-                NotesPage pageModel ->
-                    let
-                        ((newPageModel, _), msgFromPage) = Notes.update (Notes.OnNoteAddedMsg note) pageModel
-                    in
-                        ({ model | currentPage = NotesPage newPageModel }, Cmd.none)
-                        
-                _ ->
-                    (model, Cmd.none)
-                
+        Auth.NoOpMsg ->
+            model => Cmd.none
             
-        Firebase.NoOpMsg ->
-            (model, Cmd.none)
+            
+updateDatabase : Database.Msg -> Model -> (Model, Cmd Msg)
+updateDatabase msg model =
+    case msg of
+        Database.OnValuePushedMsg path key data ->
+            log ("Pushed " ++ path) model => Cmd.none
+                    
+        Database.NoOpMsg ->
+            model => Cmd.none
 
 
 initialPage : Page
@@ -163,8 +163,11 @@ view model =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
-        FirebaseMsg firebaseMsg ->
-            updateFirebase firebaseMsg model
+        AuthMsg authMsg ->
+            updateAuth authMsg model
+            
+        DatabaseMsg databaseMsg ->
+            updateDatabase databaseMsg model
             
         -- Assuming all other messages are for page updates, so route to the
         -- page updater.
@@ -182,7 +185,10 @@ init val location =
         
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Firebase.firebaseIncoming (Firebase.process >> FirebaseMsg)
+    Sub.batch 
+        [ Auth.authRead (Auth.processIncoming >> AuthMsg)
+        , Database.databaseRead (Database.processIncoming >> DatabaseMsg)
+        ]
 
  
 main : Program Value Model Msg
