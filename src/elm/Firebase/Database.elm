@@ -1,8 +1,10 @@
 port module Firebase.Database exposing 
     ( Msg(..)
+    , Path
     , databaseRead
     , processIncoming
-    , pushValue
+    , pushData
+    , listenChildAdded
     )
 
 
@@ -16,54 +18,74 @@ port databaseRead : (Value -> msg) -> Sub msg
 
 
 type Msg
-    = OnValuePushedMsg String String Value
+    = OnDataPushedMsg String String Value
+    | OnChildAddedMsg String String Value
     | NoOpMsg
 
 
 type PortMsgType
     = InvalidMsg
-    | PushValueMsg
-    | ValuePushedMsg
+    | PushDataMsg
+    | DataPushedMsg
+    | ListenChildAddedMsg
+    | ChildAddedMsg
 
 
 type alias Path = String
 
 
-pushValue : Value -> Path -> Cmd msg
-pushValue value path =
-    writeValueMsg value path PushValueMsg
+pushData : Value -> Path -> Cmd msg
+pushData data path =
+    writeDataMsg data path PushDataMsg
+    
+    
+listenChildAdded : Path -> Cmd msg
+listenChildAdded path =
+    writeMsg path ListenChildAddedMsg 
     
     
 processIncoming : Value -> Msg
 processIncoming value =
     let 
         messageType = msgFromString <| getMsgType value
+        key = value |> Decode.decodeValue (Decode.field "key" Decode.string)
+        path = value |> Decode.decodeValue (Decode.field "path" Decode.string)
+        data = value |> Decode.decodeValue (Decode.field "data" Decode.value)
     in
-        case messageType of
-            ValuePushedMsg ->
-                let
-                    key = value |> Decode.decodeValue (Decode.field "key" Decode.string)
-                    path = value |> Decode.decodeValue (Decode.field "path" Decode.string)
-                    data = value |> Decode.decodeValue (Decode.field "data" Decode.value)
-                in
-                    case (path, key, data) of
-                        (Ok p, Ok k, Ok d) ->
-                            OnValuePushedMsg p k d                
-                            
-                        (_, _, _) ->
-                            NoOpMsg
-                            
-            _ ->
+        case (path, key, data) of
+            (Ok p, Ok k, Ok d) ->
+                case messageType of
+                    DataPushedMsg ->
+                        OnDataPushedMsg p k d                
+                        
+                    ChildAddedMsg ->
+                        OnChildAddedMsg p k d
+                        
+                    _ ->
+                        NoOpMsg
+                
+            (_, _, _) ->
                 NoOpMsg
         
         
-writeValueMsg : Value -> Path -> PortMsgType -> Cmd msg
-writeValueMsg value path portMsg =
+writeDataMsg : Value -> Path -> PortMsgType -> Cmd msg
+writeDataMsg data path portMsg =
     let message =
         Encode.object
             [ ("type", Encode.string <| msgToString portMsg)
             , ("path", Encode.string path) 
-            , ("value", value)
+            , ("data", data)
+            ]
+    in
+        encode 0 message |> databaseWrite
+        
+        
+writeMsg : Path -> PortMsgType -> Cmd msg
+writeMsg path portMsg =
+    let message =
+        Encode.object
+            [ ("type", Encode.string <| msgToString portMsg)
+            , ("path", Encode.string path)
             ]
     in
         encode 0 message |> databaseWrite
@@ -75,21 +97,33 @@ msgToString msg =
         InvalidMsg ->
             ""
             
-        PushValueMsg ->
-            "pushValue"
+        PushDataMsg ->
+            "pushData"
             
-        ValuePushedMsg ->
-            "valuePushed"
+        DataPushedMsg ->
+            "dataPushed"
+            
+        ListenChildAddedMsg ->
+            "listenChildAdded"
+            
+        ChildAddedMsg ->
+            "childAdded"
             
 
 msgFromString : String -> PortMsgType
 msgFromString str =
     case str of
-        "pushValue" ->
-            PushValueMsg
+        "pushData" ->
+            PushDataMsg
             
-        "valuePushed" ->
-            ValuePushedMsg
+        "dataPushed" ->
+            DataPushedMsg
+            
+        "listenChildAdded" ->
+            ListenChildAddedMsg
+            
+        "childAdded" ->
+            ChildAddedMsg
             
         _ ->
             InvalidMsg

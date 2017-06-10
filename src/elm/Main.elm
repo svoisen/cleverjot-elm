@@ -2,6 +2,7 @@ module Main exposing (..)
 
 
 import Debug exposing (log)
+import Command.Notes exposing (addNote, listenNoteAdded)
 import Data.User exposing (User)
 import Firebase.Auth as Auth
 import Firebase.Database as Database
@@ -13,7 +14,7 @@ import Page.Login as Login
 import Page.Notes as Notes
 import Route exposing (..)
 import Time
-import Util.Helpers exposing ((=>), delay)
+import Util.Helpers exposing ((=>), (?), delay)
 
 
 {- Data type used in the model to represent the current page. This is not to be
@@ -97,7 +98,7 @@ updatePage page msg model =
                                 newModel => Cmd.none
                                 
                             Just user ->
-                                newModel => Cmd.none
+                                newModel => addNote note user
                                 
                     Notes.NotesDirtiedMsg ->
                         newModel => (delay (Time.second * 2) (NotesMsg Notes.SaveDirtyNotesMsg))
@@ -110,7 +111,12 @@ updateAuth : Auth.Msg -> Model -> (Model, Cmd Msg)
 updateAuth msg model =
     case msg of
         Auth.OnUserSignInMsg user ->
-            ({ model | currentUser = Just user }, Route.modifyUrl NotesRoute)
+            { model | currentUser = Just user } => 
+                Cmd.batch 
+                [ Route.modifyUrl NotesRoute
+                , listenNoteAdded user
+                ]
+                
             
         Auth.NoOpMsg ->
             model => Cmd.none
@@ -119,10 +125,18 @@ updateAuth msg model =
 updateDatabase : Database.Msg -> Model -> (Model, Cmd Msg)
 updateDatabase msg model =
     case msg of
-        Database.OnValuePushedMsg path key data ->
-            log ("Pushed " ++ path) model => Cmd.none
+        Database.OnChildAddedMsg path key data ->
+            let
+                root = (String.split "/" path |> List.head) ? ""
+            in
+                case (root, model.currentPage) of
+                    ("notes", NotesPage notesModel) ->
+                        log ("Added note " ++ path) model => Cmd.none
                     
-        Database.NoOpMsg ->
+                    (_, _) ->
+                        model => Cmd.none
+                        
+        _ ->
             model => Cmd.none
 
 

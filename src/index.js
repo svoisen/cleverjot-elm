@@ -14,7 +14,7 @@ var firebaseConfig = {
     },
     Elm = require('./elm/Main.elm'),
     mountNode = document.getElementById('app'),
-    app = Elm.Main.embed(mountNode);
+    app = Elm.Main.embed(mountNode),
     firebase = require('./js/firebase.js');
     
 firebase.initialize(firebaseConfig, app);
