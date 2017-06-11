@@ -6,6 +6,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onSubmit, onInput)
 import View.Form as Form exposing (input, password)
+import Util.Helpers exposing ((=>))
 
 
 type PublicMsg
@@ -36,16 +37,16 @@ update : Msg -> Model -> ((Model, Cmd Msg), PublicMsg)
 update msg model =
     case msg of
         SetEmailMsg value ->
-            (({ model | email = value }, Cmd.none), NoOpMsg)
+            { model | email = value } => Cmd.none => NoOpMsg
         
         SetPasswordMsg value ->
-            (({ model | password = value }, Cmd.none), NoOpMsg)
+            { model | password = value } => Cmd.none => NoOpMsg
         
         SubmitFormMsg ->
             let credentials = 
                 makeCredentials model.email model.password
             in
-                ((model, Cmd.none), LoginUserMsg credentials)
+                model => Cmd.none => LoginUserMsg credentials
         
 
 view : Model -> Html Msg

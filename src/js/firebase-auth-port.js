@@ -33,6 +33,7 @@ function initialize(firebase, elmApp) {
 }
 
 function handleEmailPasswordSignIn(firebase, elmApp, credentials) {
+    console.log(credentials);
     if (firebase.auth().currentUser)  {
         firebase.auth().signOut();
     }

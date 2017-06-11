@@ -19,13 +19,14 @@ import View.App as App exposing (header)
 import View.Notes exposing (notesView, noteEditor)
 
 
+{-| Messages for handling outside of this module. -}
 type PublicMsg
     = NoOpMsg
     | AddNoteMsg Note
     | NotesDirtiedMsg
 
 
-{-| Messages that are internal-only to this module -}
+{-| Messages for handling within this module. -}
 type Msg
     = OnSearchEnterMsg String
     | OnNoteAddedMsg Note
@@ -48,15 +49,8 @@ update msg model =
             { model | query = Nothing } => Cmd.none => AddNoteMsg (newNote query)
                 
         OnNoteSelectedMsg note ->
-            case note.uid of
-                Nothing ->
-                    { model | selectedNoteId = Nothing } => Cmd.none => NoOpMsg
-                    
-                Just uid ->
-                    { model | 
-                        notes = Dict.map (\k -> if k == uid then select else deselect) model.notes,
-                        selectedNoteId = note.uid
-                    } => Cmd.none => NoOpMsg
+            selectNote note.uid model => Cmd.none => NoOpMsg
+            -- model => Cmd.none => NoOpMsg
                 
         OnNoteAddedMsg note ->
             case note.uid of
@@ -64,7 +58,7 @@ update msg model =
                     model => Cmd.none => NoOpMsg
                     
                 Just uid ->
-                    { model | notes = Dict.insert uid note model.notes } => Cmd.none => NoOpMsg
+                    log uid ({ model | notes = Dict.insert uid note model.notes } => Cmd.none => NoOpMsg)
             
         OnNoteChangedMsg note ->
             case note.uid of
@@ -76,6 +70,22 @@ update msg model =
                     
         SaveDirtyNotesMsg ->
             log "SAVE" (model => Cmd.none => NoOpMsg)
+            
+            
+selectNote : Maybe String -> Model -> Model
+selectNote maybeUid model =
+    case maybeUid of
+        Nothing ->
+            { model | 
+                notes = Dict.map (\_ -> deselect) model.notes,
+                selectedNoteId = Nothing
+            }
+        
+        Just uid ->
+            { model |
+                notes = Dict.map (\k -> if k == uid then select else deselect) model.notes,
+                selectedNoteId = maybeUid
+            }
                 
 
 initialModel : Model

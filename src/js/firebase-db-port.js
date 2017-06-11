@@ -46,6 +46,7 @@ function handleListenChildAdded(firebase, elmApp, path) {
             'key': data.key,
             'data': data.val()
         };
+        console.log(data);
         elmApp.ports.databaseRead.send(message);
     });
 }
