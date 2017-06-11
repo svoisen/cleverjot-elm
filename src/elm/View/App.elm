@@ -8,18 +8,18 @@ import Util.Helpers exposing ((?))
 import Util.Html exposing (onEnter)
 
         
-header : Maybe User -> Maybe String -> (String -> msg) -> Html msg
-header maybeUser maybeQuery searchEnter =
+header : Maybe User -> Maybe String -> msg -> (String -> msg) -> Html msg
+header maybeUser maybeQuery menuClick searchEnter =
     section [ class "header" ] 
-    [ hamburgerMenu
+    [ menuButton menuClick
     , searchInput maybeQuery searchEnter
     ]
     
     
-hamburgerMenu : Html msg
-hamburgerMenu = 
-    button [ class "hamburger" ] 
-    [ span [ class "fa fa-bars" ] []
+menuButton : msg -> Html msg
+menuButton menuClick = 
+    button [ class "hamburger" onClick menuClick ] 
+    [ span [ class "fa fa-bars" ] [ ]
     ]
     
     
