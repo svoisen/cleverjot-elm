@@ -27,11 +27,12 @@ userDecoder =
         |> optional "displayName" (Decode.nullable Decode.string) Nothing
     
     
-encodeCredentials : Credentials -> List (String, Value)
+encodeCredentials : Credentials -> Value
 encodeCredentials credentials =
-    [ ("email", Encode.string credentials.email)
-    , ("password", Encode.string credentials.password)
-    ]
+    Encode.object
+        [ ("email", Encode.string credentials.email)
+        , ("password", Encode.string credentials.password)
+        ]
     
     
 encodeUser : User -> Value

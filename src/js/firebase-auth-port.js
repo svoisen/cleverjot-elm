@@ -18,6 +18,7 @@ function initialize(firebase, elmApp) {
     
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
+            console.log('User ' + user.email + ' signed in.');
             let message = {
                 'type': SIGN_IN_SUCCESS_MSG,
                 'user': user
@@ -33,7 +34,8 @@ function initialize(firebase, elmApp) {
 }
 
 function handleEmailPasswordSignIn(firebase, elmApp, credentials) {
-    console.log(credentials);
+    console.log("Sign in " + credentials.email);
+    
     if (firebase.auth().currentUser)  {
         firebase.auth().signOut();
     }

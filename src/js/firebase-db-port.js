@@ -28,6 +28,8 @@ function handlePush(firebase, elmApp, path, data) {
     var ref = firebase.database().ref(path).push();
     ref.set(data);
     
+    console.log('Added data to path ' + path + ' with key ' + ref.key);
+    
     let message = {
         'type': DATA_PUSHED_MSG,
         'path': path,
@@ -46,7 +48,7 @@ function handleListenChildAdded(firebase, elmApp, path) {
             'key': data.key,
             'data': data.val()
         };
-        console.log(data);
+        console.log(message);
         elmApp.ports.databaseRead.send(message);
     });
 }

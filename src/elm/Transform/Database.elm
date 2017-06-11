@@ -4,6 +4,7 @@ module Transform.Database exposing
     )
 
 
+import Debug exposing (log)
 import Data.Note exposing (Note, noteDecoder)
 import Firebase.Database as FBDatabase exposing (Path)
 import Json.Decode as Decode
@@ -29,15 +30,15 @@ transform msg =
                 UserNotesPath ->
                     let
                         noteResult = data
-                            |> Decode.decodeValue noteDecoder
-                            |> Result.map (\note -> { note | uid = Just key })
+                            |> Decode.decodeValue (noteDecoder key)
+                            
                     in
                         case noteResult of 
                             Ok note ->
                                 OnNoteAddedMsg note
                                 
-                            Err _ ->
-                                InvalidDataMsg
+                            Err errMsg ->
+                                log errMsg InvalidDataMsg
                         
                 UnknownPath ->
                     InvalidDataMsg 

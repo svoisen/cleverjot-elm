@@ -33,8 +33,10 @@ type PortMsgType
 signIn : Credentials -> Cmd msg
 signIn credentials =
     let message =
-        ("type", toString EmailPasswordSignInMsg |> Encode.string) :: (encodeCredentials credentials)
-            |> Encode.object
+        Encode.object
+            [ ("type", msgToString EmailPasswordSignInMsg |> Encode.string)
+            , ("credentials", encodeCredentials credentials)
+            ]
     in
         encode 0 message |> authWrite
         
@@ -43,7 +45,7 @@ signOut : Cmd msg
 signOut =
     let message =
         Encode.object [
-            ("type", toString SignOutMsg |> Encode.string)
+            ("type", msgToString SignOutMsg |> Encode.string)
         ]
     in
         encode 0 message |> authWrite

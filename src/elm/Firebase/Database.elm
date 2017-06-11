@@ -8,6 +8,7 @@ port module Firebase.Database exposing
     )
 
 
+import Debug exposing (log)
 import Firebase.Util exposing (getMsgType)
 import Json.Decode as Decode exposing (Value)
 import Json.Encode as Encode exposing (encode)

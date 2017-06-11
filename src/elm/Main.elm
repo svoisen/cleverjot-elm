@@ -16,6 +16,7 @@ import Route exposing (..)
 import Time
 import Transform.Database as Database exposing (Msg(..), transform)
 import Util.Helpers exposing ((=>), (?), delay)
+import View.App exposing (header)
 
 
 {- Data type used in the model to represent the current page. This is not to be
@@ -61,7 +62,18 @@ setRoute maybeRoute model =
             { model | currentPage = HomePage Home.initialModel } => Cmd.none
             
         Just NotesRoute ->
-            { model | currentPage = NotesPage Notes.initialModel } => Cmd.none 
+            case model.currentUser of
+                Nothing ->
+                    -- Keep non-logged in users out of the app
+                    setRoute (Just LoginRoute) model
+                    
+                Just user ->
+                    -- Ensure as part of setting route we listen for database
+                    -- updates
+                    { model | currentPage = NotesPage Notes.initialModel } =>   
+                        Cmd.batch 
+                            [ listenNoteAdded user
+                            ]
         
     
 {-| Handles updates as a result of messages coming from a page. -}
@@ -81,7 +93,7 @@ updateFromPage page msg model =
                         { model | currentPage = LoginPage newPageModel } => Cmd.none
                         
                     Login.LoginUserMsg credentials ->
-                        log "login" ({ model | currentPage = LoginPage newPageModel } => FBAuth.signIn credentials)
+                        { model | currentPage = LoginPage newPageModel } => FBAuth.signIn credentials
                         
         (NotesMsg pageMsg, NotesPage pageModel) ->
             let
@@ -104,6 +116,7 @@ updateFromPage page msg model =
                                 
                     Notes.NotesDirtiedMsg ->
                         newModel => (delay (Time.second * 2) (NotesMsg Notes.SaveDirtyNotesMsg))
+                        
             
         (_, _) ->
             model => Cmd.none
@@ -113,12 +126,7 @@ updateFromAuth : Page -> FBAuth.Msg -> Model -> (Model, Cmd Msg)
 updateFromAuth page msg model =
     case (msg, page) of
         (FBAuth.OnUserSignInMsg user, LoginPage _) ->
-            { model | currentUser = Just user } => 
-                Cmd.batch 
-                [ Route.modifyUrl NotesRoute
-                , listenNoteAdded user
-                ]
-                
+            { model | currentUser = Just user } => Route.modifyUrl NotesRoute
             
         (_, _) ->
             model => Cmd.none

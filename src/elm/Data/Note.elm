@@ -2,6 +2,7 @@ module Data.Note exposing
     ( Note
     , select
     , deselect
+    , invalidNoteId
     , markDirty
     , markClean
     , newNote
@@ -17,7 +18,7 @@ import Util.Encode as EncodeUtil exposing (maybeString)
 
 
 type alias Note =
-    { uid : Maybe String
+    { uid : String
     , title : Maybe String
     , text : String
     , selected : Bool
@@ -25,9 +26,13 @@ type alias Note =
     }
     
     
+invalidNoteId : String
+invalidNoteId = ""
+    
+    
 newNote : String -> Note
 newNote text =
-    { uid = Nothing
+    { uid = ""
     , title = Nothing
     , text = text
     , selected = False
@@ -58,16 +63,16 @@ markClean note =
 encodeNote : Note -> Value
 encodeNote note =
     Encode.object
-        [ ("uid", EncodeUtil.maybeString note.uid)
+        [ ("uid", if note.uid == invalidNoteId then Encode.null else Encode.string note.uid)
         , ("title", EncodeUtil.maybeString note.title)
         , ("text", Encode.string note.text)
         ]
             
 
-noteDecoder : Decoder Note
-noteDecoder =
+noteDecoder : String -> Decoder Note
+noteDecoder uid =
     Pipeline.decode Note
-        |> optional "uid" (Decode.nullable Decode.string) Nothing
+        |> optional "uid" Decode.string uid
         |> optional "title" (Decode.nullable Decode.string) Nothing
         |> required "text" Decode.string
         |> optional "selected" Decode.bool False
