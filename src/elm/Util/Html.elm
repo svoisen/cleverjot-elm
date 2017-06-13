@@ -23,4 +23,4 @@ onEnter tagger =
         decodeEnter =
             Decode.andThen isEnter keyCode
     in
-        on "keydown" <| Decode.map2(\key value -> tagger value) decodeEnter targetValue
+        on "keydown" <| Decode.map2 (\key value -> tagger value) decodeEnter targetValue

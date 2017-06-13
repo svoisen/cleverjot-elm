@@ -8,26 +8,27 @@ module Page.Notes exposing
     )
 
 
+import Command.Notes exposing (addNote)
 import Debug exposing (log)
+import Debounce exposing (Debounce)
 import Data.Note exposing (Note, newNote, select, deselect, markDirty, markClean, invalidNoteId)
 import Data.User exposing (User)
 import Dict exposing (Dict)
 import ElmTextSearch as Search
 import Html exposing (Html, div, section)
 import Html.Attributes exposing (class)
+import Time exposing (second)
 import Util.Helpers exposing ((=>), (?))
 import View.App as App exposing (header)
 import View.Notes exposing (notesView, noteEditor)
 
 
-{-| Messages for handling outside of this module. -}
+{-| Messages intended for handling outside of this module. -}
 type PublicMsg
     = NoOpMsg
-    | AddNoteMsg Note
-    | NotesDirtiedMsg
 
 
-{-| Messages for handling within this module. -}
+{-| Messages intended for handling within this module. -}
 type Msg
     = OnSearchEnterMsg String
     | OnSearchInputMsg String
@@ -35,7 +36,7 @@ type Msg
     | OnNoteSelectedMsg Note
     | OnNoteChangedMsg Note 
     | OnMenuClickMsg
-    | SaveDirtyNotesMsg
+    | SaveDebounceMsg Debounce.Msg
     
     
 type alias Model =
@@ -44,11 +45,12 @@ type alias Model =
     , selectedNoteId : String
     , searchIndex : Search.Index Note
     , query : Maybe String
+    , saveDebounce : Debounce String
     }
     
     
-update : Msg -> Model -> ((Model, Cmd Msg), PublicMsg)
-update msg model =
+update : Msg -> Model -> Maybe User -> ((Model, Cmd Msg), PublicMsg)
+update msg model maybeUser =
     case msg of
         OnMenuClickMsg ->
             model => Cmd.none => NoOpMsg
@@ -60,7 +62,13 @@ update msg model =
                 runSearch query model => Cmd.none => NoOpMsg
         
         OnSearchEnterMsg query ->
-            { model | query = Nothing } => Cmd.none => AddNoteMsg (newNote query)
+            let
+                cmd =  
+                    case maybeUser of
+                        Nothing -> Cmd.none
+                        Just user -> addNote (newNote query) user
+            in 
+                { model | query = Nothing } => cmd => NoOpMsg
                 
         OnNoteSelectedMsg note ->
             selectNote note.uid model => Cmd.none => NoOpMsg
@@ -88,10 +96,16 @@ update msg model =
                                     runSearch query newModel => Cmd.none => NoOpMsg
             
         OnNoteChangedMsg note ->
-            { model | notes = Dict.update note.uid (\_ -> Just (markDirty note)) model.notes } => Cmd.none => NotesDirtiedMsg
+            let
+                (debounce, cmd) = Debounce.push saveDebounceConfig note.uid model.saveDebounce 
+            in
+                { model | 
+                    notes = Dict.update note.uid (\_ -> Just (markDirty note)) model.notes,
+                    saveDebounce = debounce 
+                } => cmd => NoOpMsg
                     
-        SaveDirtyNotesMsg ->
-            model => Cmd.none => NoOpMsg
+        SaveDebounceMsg msg ->
+            log "DEBOUNCE" (model => Cmd.none => NoOpMsg)
             
             
 clearSearch : Model -> Model
@@ -153,6 +167,13 @@ createSearchIndex =
             ]
         , listFields = []
         }
+        
+        
+saveDebounceConfig : Debounce.Config Msg
+saveDebounceConfig = 
+    { strategy = Debounce.later (1 * second)
+    , transform = SaveDebounceMsg
+    }
                 
 
 initialModel : Model
@@ -162,6 +183,7 @@ initialModel =
     , selectedNoteId = invalidNoteId
     , searchIndex = createSearchIndex
     , query = Nothing
+    , saveDebounce = Debounce.init
     }
 
 

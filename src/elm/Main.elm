@@ -1,8 +1,7 @@
 module Main exposing (..)
 
 
-import Debug exposing (log)
-import Command.Notes exposing (addNote, listenNoteAdded)
+import Command.Notes exposing (listenNoteAdded)
 import Data.User exposing (User)
 import Firebase.Auth as FBAuth
 import Firebase.Database as FBDatabase
@@ -13,10 +12,8 @@ import Page.Home as Home
 import Page.Login as Login
 import Page.Notes as Notes
 import Route exposing (..)
-import Time
 import Transform.Database as Database exposing (Msg(..), transform)
-import Util.Helpers exposing ((=>), (?), delay)
-import View.App exposing (header)
+import Util.Helpers exposing ((=>), (?))
 
 
 {- Data type used in the model to represent the current page. This is not to be
@@ -98,25 +95,15 @@ updateFromPage page msg model =
         (NotesMsg pageMsg, NotesPage pageModel) ->
             let
                 ((newPageModel, cmd), msgFromPage) 
-                    = Notes.update pageMsg pageModel
+                    = Notes.update pageMsg pageModel model.currentUser
+                    
                 newModel 
                     = { model | currentPage = NotesPage newPageModel }
+                    
             in
                 case msgFromPage of
                     Notes.NoOpMsg ->
-                        newModel => Cmd.none
-                    
-                    Notes.AddNoteMsg note ->
-                        case model.currentUser of
-                            Nothing ->
-                                newModel => Cmd.none
-                                
-                            Just user ->
-                                newModel => addNote note user
-                                
-                    Notes.NotesDirtiedMsg ->
-                        newModel => (delay (Time.second * 2) (NotesMsg Notes.SaveDirtyNotesMsg))
-                        
+                        newModel => Cmd.map NotesMsg cmd
             
         (_, _) ->
             model => Cmd.none
@@ -138,7 +125,8 @@ updateFromDatabase page msg model =
         (Database.OnNoteAddedMsg note, NotesPage pageModel) ->
             let
                 ((newPageModel, cmd), msgFromPage) 
-                    = Notes.update (Notes.OnNoteAddedMsg note) pageModel
+                    = Notes.update (Notes.OnNoteAddedMsg note) pageModel model.currentUser
+                    
                 newModel 
                     = { model | currentPage = NotesPage newPageModel }
             in
@@ -148,11 +136,6 @@ updateFromDatabase page msg model =
             model => Cmd.none
             
             
-initialPage : Page
-initialPage = 
-    BlankPage
-    
-    
 viewPage : Page -> Maybe User -> Html Msg
 viewPage page maybeUser =
     case page of
@@ -197,12 +180,16 @@ update msg model =
             updateFromPage model.currentPage msg model
             
             
+initialModel : Model
+initialModel =
+    { currentPage = BlankPage
+    , currentUser = Nothing
+    }
+            
+            
 init : Value -> Location -> (Model, Cmd Msg)
 init val location =
-    setRoute (fromLocation location)
-        { currentPage = initialPage 
-        , currentUser = Nothing
-        }
+    setRoute (fromLocation location) initialModel
         
         
 subscriptions : Model -> Sub Msg
