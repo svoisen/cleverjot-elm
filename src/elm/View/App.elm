@@ -28,5 +28,5 @@ searchInputView : Maybe String -> (String -> msg) -> (String -> msg) -> Html msg
 searchInputView maybeQuery searchEnter searchInput =
     div [ class "search" ]
     [ span [ class "loupe fa fa-search" ] [ ]
-    , input [ class "search-input", placeholder "Search or create note ...", value (maybeQuery ? ""), onEnter searchEnter, onInput searchInput ] [ ]
+    , input [ class "search-input", placeholder "Search or create new note ...", value (maybeQuery ? ""), onEnter searchEnter, onInput searchInput ] [ ]
     ]

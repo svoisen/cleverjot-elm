@@ -35,7 +35,7 @@ transform msg =
                     in
                         case noteResult of 
                             Ok note ->
-                                OnNoteAddedMsg note
+                                log "OnNoteAddedMsg" (OnNoteAddedMsg note)
                                 
                             Err errMsg ->
                                 log errMsg InvalidDataMsg
@@ -53,7 +53,7 @@ getPathRoot path =
         root = (String.split "/" path |> List.head) ? ""
     in
         case root of
-            "notes" ->
+            "user-notes" ->
                 UserNotesPath
                 
             _ ->

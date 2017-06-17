@@ -13,7 +13,7 @@ var firebaseConfig = {
         messagingSenderId: "815268911169"
     },
     Elm = require('./elm/Main.elm'),
-    mountNode = document.getElementById('app'),
+    mountNode = document.body,
     app = Elm.Main.embed(mountNode),
     firebase = require('./js/firebase.js');
     

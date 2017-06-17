@@ -4,6 +4,7 @@ port module Firebase.Database exposing
     , databaseRead
     , processIncoming
     , pushData
+    , setData
     , listenChildAdded
     )
 
@@ -28,6 +29,8 @@ type PortMsgType
     = InvalidMsg
     | PushDataMsg
     | DataPushedMsg
+    | SetDataMsg
+    | DataSetMsg
     | ListenChildAddedMsg
     | ChildAddedMsg
 
@@ -40,6 +43,11 @@ pushData data path =
     writeDataMsg data path PushDataMsg
     
     
+setData : Value -> Path -> Cmd msg
+setData data path =
+    writeDataMsg data path SetDataMsg
+    
+    
 listenChildAdded : Path -> Cmd msg
 listenChildAdded path =
     writeMsg path ListenChildAddedMsg 
@@ -48,7 +56,7 @@ listenChildAdded path =
 processIncoming : Value -> Msg
 processIncoming value =
     let 
-        messageType = msgFromString <| getMsgType value
+        messageType = getMsgType value |> msgFromString
         key = value |> Decode.decodeValue (Decode.field "key" Decode.string)
         path = value |> Decode.decodeValue (Decode.field "path" Decode.string)
         data = value |> Decode.decodeValue (Decode.field "data" Decode.value)
@@ -104,6 +112,12 @@ msgToString msg =
         DataPushedMsg ->
             "dataPushed"
             
+        SetDataMsg ->
+            "setData"
+            
+        DataSetMsg ->
+            "dataSet"
+            
         ListenChildAddedMsg ->
             "listenChildAdded"
             
@@ -119,6 +133,12 @@ msgFromString str =
             
         "dataPushed" ->
             DataPushedMsg
+            
+        "setData" ->
+            SetDataMsg
+            
+        "dataSet" ->
+            DataSetMsg
             
         "listenChildAdded" ->
             ListenChildAddedMsg

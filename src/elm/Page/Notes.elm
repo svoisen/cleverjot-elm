@@ -8,15 +8,16 @@ module Page.Notes exposing
     )
 
 
-import Command.Notes exposing (addNote)
+import Command.Notes exposing (addNote, updateNote)
 import Debug exposing (log)
 import Debounce exposing (Debounce)
-import Data.Note exposing (Note, newNote, select, deselect, markDirty, markClean, invalidNoteId)
+import Data.Note exposing (Note, newNote, emptyNote, select, deselect, markDirty, markClean, invalidNoteId)
 import Data.User exposing (User)
 import Dict exposing (Dict)
 import ElmTextSearch as Search
 import Html exposing (Html, div, section)
 import Html.Attributes exposing (class)
+import Set exposing (Set)
 import Time exposing (second)
 import Util.Helpers exposing ((=>), (?))
 import View.App as App exposing (header)
@@ -46,6 +47,7 @@ type alias Model =
     , searchIndex : Search.Index Note
     , query : Maybe String
     , saveDebounce : Debounce String
+    , dirtyNoteIds : Set String
     }
     
     
@@ -97,15 +99,32 @@ update msg model maybeUser =
             
         OnNoteChangedMsg note ->
             let
+                -- Only save the note after enough idle time delay to avoid excessive database
+                -- operations.
                 (debounce, cmd) = Debounce.push saveDebounceConfig note.uid model.saveDebounce 
             in
                 { model | 
                     notes = Dict.update note.uid (\_ -> Just (markDirty note)) model.notes,
+                    dirtyNoteIds = Set.insert note.uid model.dirtyNoteIds,
                     saveDebounce = debounce 
                 } => cmd => NoOpMsg
                     
         SaveDebounceMsg msg ->
-            log "DEBOUNCE" (model => Cmd.none => NoOpMsg)
+            let
+                cmd = 
+                    case maybeUser of
+                        Nothing ->
+                            Cmd.batch [ Cmd.none ]
+                            
+                        Just user ->
+                            Set.toList model.dirtyNoteIds
+                            |> List.map (\uid -> Dict.get uid model.notes ? emptyNote)
+                            |> List.filter (\note -> note.uid /= invalidNoteId)
+                            |> List.map (\note -> updateNote note user)
+                            |> Cmd.batch
+                            
+            in
+                { model | dirtyNoteIds = Set.empty } => cmd => NoOpMsg
             
             
 clearSearch : Model -> Model
@@ -171,7 +190,7 @@ createSearchIndex =
         
 saveDebounceConfig : Debounce.Config Msg
 saveDebounceConfig = 
-    { strategy = Debounce.later (1 * second)
+    { strategy = Debounce.later (2 * second)
     , transform = SaveDebounceMsg
     }
                 
@@ -184,6 +203,7 @@ initialModel =
     , searchIndex = createSearchIndex
     , query = Nothing
     , saveDebounce = Debounce.init
+    , dirtyNoteIds = Set.empty
     }
 
 

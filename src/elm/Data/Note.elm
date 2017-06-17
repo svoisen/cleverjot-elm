@@ -6,6 +6,7 @@ module Data.Note exposing
     , markDirty
     , markClean
     , newNote
+    , emptyNote
     , encodeNote
     , noteDecoder
     )
@@ -38,6 +39,11 @@ newNote text =
     , selected = False
     , dirty = False
     }
+    
+    
+emptyNote : Note
+emptyNote =
+    newNote ""
     
     
 select : Note -> Note
