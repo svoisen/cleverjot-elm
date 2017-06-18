@@ -6,20 +6,23 @@ module Data.Note exposing
     , markDirty
     , markClean
     , newNote
-    , emptyNote
     , encodeNote
     , noteDecoder
     )
 
 
+import Dict exposing (Dict)
 import Json.Encode as Encode exposing (Value, string)
 import Json.Decode as Decode exposing (Decoder, nullable, string)
 import Json.Decode.Pipeline as Pipeline exposing (decode, optional, required)
 import Util.Encode as EncodeUtil exposing (maybeString)
 
 
+type alias NoteId = String
+
+
 type alias Note =
-    { uid : String
+    { uid : NoteId
     , title : Maybe String
     , text : String
     , selected : Bool
@@ -27,7 +30,7 @@ type alias Note =
     }
     
     
-invalidNoteId : String
+invalidNoteId : NoteId
 invalidNoteId = ""
     
     
@@ -39,11 +42,6 @@ newNote text =
     , selected = False
     , dirty = False
     }
-    
-    
-emptyNote : Note
-emptyNote =
-    newNote ""
     
     
 select : Note -> Note
