@@ -1,5 +1,6 @@
 module Data.Note exposing 
     ( Note
+    , NoteId
     , select
     , deselect
     , invalidNoteId
@@ -11,7 +12,6 @@ module Data.Note exposing
     )
 
 
-import Dict exposing (Dict)
 import Json.Encode as Encode exposing (Value, string)
 import Json.Decode as Decode exposing (Decoder, nullable, string)
 import Json.Decode.Pipeline as Pipeline exposing (decode, optional, required)

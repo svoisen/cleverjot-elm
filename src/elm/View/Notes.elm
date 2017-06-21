@@ -36,10 +36,11 @@ noteEditor maybeNote onInputFn =
     let contents =
         case maybeNote of
             Nothing ->
-                [ Html.text "" ]
+                [ text "" ]
                 
             Just note ->
-                [ textarea [ class "note-editor", onInput (\str -> onInputFn { note | text = str }) ] [ text note.text ]
+                [ textarea [ class "note-editor", onInput (\str -> onInputFn { note | text = str }), value note.text ] [ ]
                 ]
+                
     in
         div [ class "note-view" ] contents

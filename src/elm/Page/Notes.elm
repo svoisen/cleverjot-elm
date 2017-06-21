@@ -11,9 +11,9 @@ module Page.Notes exposing
 import Command.Notes exposing (addNote, updateNote)
 import Debug exposing (log)
 import Debounce exposing (Debounce)
-import Data.Note exposing (Note, newNote, emptyNote, select, deselect, markDirty, markClean, invalidNoteId)
+import Data.Note as Note exposing (Note, newNote, invalidNoteId)
+import Data.NoteCollection as NoteCollection exposing (NoteCollection)
 import Data.User exposing (User)
-import Dict exposing (Dict)
 import ElmTextSearch as Search
 import Html exposing (Html, div, section)
 import Html.Attributes exposing (class)
@@ -41,13 +41,10 @@ type Msg
     
     
 type alias Model =
-    { notes : Dict String Note
-    , filteredNotes : List Note
-    , selectedNoteId : String
+    { notes : NoteCollection
     , searchIndex : Search.Index Note
     , query : Maybe String
     , saveDebounce : Debounce String
-    , dirtyNoteIds : Set String
     }
     
     
@@ -70,24 +67,28 @@ update msg model maybeUser =
                         Nothing -> Cmd.none
                         Just user -> addNote (newNote query) user
             in 
-                { model | query = Nothing } => cmd => NoOpMsg
+                { model | 
+                    query = Nothing,
+                    notes = NoteCollection.clearFilter model.notes
+                } => cmd => NoOpMsg
                 
         OnNoteSelectedMsg note ->
-            selectNote note.uid model => Cmd.none => NoOpMsg
+            { model | notes = NoteCollection.select note.uid model.notes } => Cmd.none => NoOpMsg
                 
         OnNoteAddedMsg note ->
             let
                 newIndexResult = Search.add note model.searchIndex
-                newNotes = Dict.insert note.uid note model.notes
+                newNotes = NoteCollection.insert note model.notes
                 
             in
                 case newIndexResult of
                     Err errMsg ->
+                        -- TODO: Determine how to handle error in inserting to search index
                         log errMsg ({ model | notes = newNotes } => Cmd.none => NoOpMsg)
                     
                     Ok newIndex ->
                         let
-                            newModel = { model | searchIndex = newIndex, notes = newNotes, filteredNotes = Dict.values newNotes }
+                            newModel = { model | searchIndex = newIndex, notes = newNotes }
                             
                         in
                             case model.query of
@@ -102,10 +103,10 @@ update msg model maybeUser =
                 -- Only save the note after enough idle time delay to avoid excessive database
                 -- operations.
                 (debounce, cmd) = Debounce.push saveDebounceConfig note.uid model.saveDebounce 
+                
             in
                 { model | 
-                    notes = Dict.update note.uid (\_ -> Just (markDirty note)) model.notes,
-                    dirtyNoteIds = Set.insert note.uid model.dirtyNoteIds,
+                    notes = NoteCollection.update note model.notes |> NoteCollection.markDirty note.uid,
                     saveDebounce = debounce 
                 } => cmd => NoOpMsg
                     
@@ -117,21 +118,19 @@ update msg model maybeUser =
                             Cmd.batch [ Cmd.none ]
                             
                         Just user ->
-                            Set.toList model.dirtyNoteIds
-                            |> List.map (\uid -> Dict.get uid model.notes ? emptyNote)
-                            |> List.filter (\note -> note.uid /= invalidNoteId)
+                            NoteCollection.dirtied model.notes
                             |> List.map (\note -> updateNote note user)
                             |> Cmd.batch
                             
             in
-                { model | dirtyNoteIds = Set.empty } => cmd => NoOpMsg
+                { model | notes = NoteCollection.markAllClean model.notes } => cmd => NoOpMsg
             
             
 clearSearch : Model -> Model
 clearSearch model =
     { model |
         query = Nothing,
-        filteredNotes = Dict.values model.notes
+        notes = NoteCollection.clearFilter model.notes
     }
             
             
@@ -143,38 +142,13 @@ runSearch query model =
     in
         case searchResults of
             Err err ->
-                -- log err { model | query = Nothing, filteredNotes = Dict.values model.notes }
                 { model | query = Just query }
                 
             Ok (newIndex, weightedNoteIds) ->
-                let 
-                    newFilteredNotes = filterNotes weightedNoteIds model.notes
-                    keepSelected = List.member model.selectedNoteId (List.map Tuple.first weightedNoteIds)
-                    
-                in
-                    { model |
-                        query = Just query,
-                        filteredNotes = newFilteredNotes,
-                        selectedNoteId = if keepSelected then model.selectedNoteId else invalidNoteId
-                    }
-            
-            
-filterNotes : List (String, Float) -> Dict String Note -> List Note
-filterNotes weightedNoteIds notes =
-    let
-        noteIds = List.map Tuple.first weightedNoteIds
-        
-    in
-        Dict.filter (\key _ -> List.member key noteIds) notes |> Dict.values
-            
-            
-selectNote : String -> Model -> Model
-selectNote uid model =
-    { model |
-        notes = Dict.map (\k -> if k == uid then select else deselect) model.notes,
-        filteredNotes = List.map (\n -> if uid == n.uid then select n else deselect n) model.filteredNotes,
-        selectedNoteId = uid
-    }
+                { model |
+                    query = Just query,
+                    notes = NoteCollection.filter (List.map Tuple.first weightedNoteIds |> Set.fromList) model.notes
+                }
             
             
 createSearchIndex : Search.Index Note
@@ -190,20 +164,17 @@ createSearchIndex =
         
 saveDebounceConfig : Debounce.Config Msg
 saveDebounceConfig = 
-    { strategy = Debounce.later (2 * second)
+    { strategy = Debounce.later (5 * second)
     , transform = SaveDebounceMsg
     }
                 
 
 initialModel : Model
 initialModel =
-    { notes = Dict.empty 
-    , filteredNotes = []
-    , selectedNoteId = invalidNoteId
+    { notes = NoteCollection.empty 
     , searchIndex = createSearchIndex
     , query = Nothing
     , saveDebounce = Debounce.init
-    , dirtyNoteIds = Set.empty
     }
 
 
@@ -212,8 +183,8 @@ view model maybeUser =
     div [ class "notes-page page" ] 
     [ header maybeUser model.query OnMenuClickMsg OnSearchEnterMsg OnSearchInputMsg
     , section [ class "page-body" ]
-        [ notesView model.filteredNotes OnNoteSelectedMsg
-        , noteEditor (Dict.get model.selectedNoteId model.notes) OnNoteChangedMsg
+        [ notesView (NoteCollection.filtered model.notes) OnNoteSelectedMsg
+        , noteEditor (NoteCollection.selected model.notes) OnNoteChangedMsg
         ]
     ]
     
