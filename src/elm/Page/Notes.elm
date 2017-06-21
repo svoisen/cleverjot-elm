@@ -78,7 +78,7 @@ update msg model maybeUser =
         OnNoteAddedMsg note ->
             let
                 newIndexResult = Search.add note model.searchIndex
-                newNotes = NoteCollection.insert note model.notes
+                newNotes = NoteCollection.insert note model.notes |> NoteCollection.select note.uid
                 
             in
                 case newIndexResult of
