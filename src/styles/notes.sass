@@ -29,6 +29,9 @@ $notes-view-width: 360px
             p
                 margin: 0
                 padding: 0
+                
+            .highlight
+                background: $highlighter-yellow
             
         .notes-list-item:hover
             background: $light-gray
@@ -38,9 +41,18 @@ $notes-view-width: 360px
             background: $medium-gray
             border-left: 4px solid $cyan
             
+            .highlight
+                background: $highlighter-yellow
+                color: $dark-gray
+            
+            
         
 .note-view
-    margin-left: $notes-view-width
+    position: absolute
+    left: $notes-view-width
+    top: 0
+    bottom: 0
+    right: 0
     padding: 15px
     
     .note-editor

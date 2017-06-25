@@ -183,7 +183,7 @@ view model maybeUser =
     div [ class "notes-page page" ] 
     [ header maybeUser model.query OnMenuClickMsg OnSearchEnterMsg OnSearchInputMsg
     , section [ class "page-body" ]
-        [ notesView (NoteCollection.filtered model.notes) OnNoteSelectedMsg
+        [ notesView (NoteCollection.filtered model.notes) model.query OnNoteSelectedMsg
         , noteEditor (NoteCollection.selected model.notes) OnNoteChangedMsg
         ]
     ]
