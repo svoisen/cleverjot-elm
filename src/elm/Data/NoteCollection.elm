@@ -3,6 +3,7 @@ module Data.NoteCollection exposing
     , insert
     , update
     , remove
+    , get
     , empty
     , markDirty
     , markAllClean
@@ -56,6 +57,11 @@ remove noteId noteCollection =
         dirtyNoteIds = Set.remove noteId noteCollection.dirtyNoteIds,
         filteredNoteIds = Set.remove noteId noteCollection.filteredNoteIds
     }
+    
+    
+get : NoteId -> NoteCollection -> Maybe Note
+get noteId noteCollection =
+    Dict.get noteId noteCollection.allNotes
     
     
 select : NoteId -> NoteCollection -> NoteCollection

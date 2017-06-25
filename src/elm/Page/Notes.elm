@@ -110,20 +110,32 @@ update msg model maybeUser =
                     saveDebounce = debounce 
                 } => cmd => NoOpMsg
                     
-        SaveDebounceMsg msg ->
+        SaveDebounceMsg noteId ->
             let
+                dirtiedNotes = NoteCollection.dirtied model.notes
+                newIndexResult = List.foldr (\note result -> Result.andThen (\index -> Search.update note index) result) (Ok model.searchIndex) dirtiedNotes
                 cmd = 
                     case maybeUser of
                         Nothing ->
+                            -- TODO: Should we still mark notes clean?
                             Cmd.batch [ Cmd.none ]
                             
                         Just user ->
-                            NoteCollection.dirtied model.notes
+                            dirtiedNotes
                             |> List.map (\note -> updateNote note user)
                             |> Cmd.batch
                             
             in
-                { model | notes = NoteCollection.markAllClean model.notes } => cmd => NoOpMsg
+                case newIndexResult of
+                    Err errMsg ->
+                        -- TODO: How to handle this?
+                        log errMsg (model => cmd => NoOpMsg)
+                        
+                    Ok newIndex ->
+                        { model | 
+                            notes = NoteCollection.markAllClean model.notes,
+                            searchIndex = newIndex 
+                        } => cmd => NoOpMsg
             
             
 clearSearch : Model -> Model
