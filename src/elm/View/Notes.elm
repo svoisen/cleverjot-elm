@@ -4,11 +4,14 @@ module View.Notes exposing
     )
 
 
-import Debug exposing (log)
+import Data.Note exposing (Note)
+-- import Debug exposing (log)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
-import Data.Note exposing (Note)
+import List.Extra exposing (last)
+import String exposing (toLower)
+import String.Extra exposing (softEllipsis)
 import Util.Helpers exposing ((?))
 
 
@@ -35,36 +38,51 @@ notesListItem note query onClickFn =
         
 notePreview : Note -> Maybe String -> Html msg
 notePreview note maybeQuery =
-    case maybeQuery of
-        Nothing ->
-            div [ ] [ text note.text ]
+    let
+        maxLength = 128
+        truncatedText = softEllipsis maxLength note.text
+        
+    in
+        case maybeQuery of
+            Nothing ->
+                div [ ] [ text truncatedText ]
+                
+            Just query ->
+                let
+                    indices = String.indices (toLower query) (toLower note.text) 
+                    truncatedIndices = List.filter (\idx -> idx < maxLength) indices
+                    highlightEllipsis = List.length truncatedIndices < List.length indices
+                    highlighted = highlightText truncatedText (List.reverse truncatedIndices) (String.length query) [ ] highlightEllipsis
+                    
+                in
+                    div [ ] highlighted
+                    
+                    
+{-| Given some text, the length of a substring to highlight in the text, and all
+of the indices in which the substring appears (in reverse order), return a list
+of <span> highlighting the substrings in the text. The substring indices should
+be reversed because this function works on the original string in reverse. -}
+highlightText : String -> List Int -> Int -> List (Html msg) -> Bool -> List (Html msg)
+highlightText text indices highlightLen elements highlightEllipsis =
+    if highlightEllipsis then
+        highlightText (String.dropRight 3 text) indices highlightLen [ span [ class "highlight" ] [ Html.text "..." ] ] False
+        
+    else 
+        if List.isEmpty indices then
+            (Html.text text) :: elements
             
-        Just query ->
+        else
             let
-                indices = String.indices (String.toLower query) (String.toLower note.text) 
-                highlighted = highlightText note.text indices (String.length query) [ ]
+                textLen = String.length text
+                startIdx = List.head indices ? 0
+                endIdx = startIdx + highlightLen
+                unhighlightedEl = String.right (textLen - endIdx) text |> Html.text
+                highlightedEl = [ String.slice startIdx endIdx text |> Html.text ] |> span [ class "highlight" ]
+                newElements = highlightedEl :: unhighlightedEl :: elements
+                newText = String.dropRight (textLen - startIdx) text
                 
             in
-                log (toString indices) (div [ ] highlighted)
-                    
-                    
-highlightText : String -> List Int -> Int -> List (Html msg) -> List (Html msg)
-highlightText text indices length elements =
-    if List.isEmpty indices then
-        if String.isEmpty text then
-            elements
-        else
-            elements ++ [ span [ ] [ Html.text text ] ]
-    else
-        let
-            startIdx = List.head indices ? 0
-            endIdx = startIdx + length
-            preEl = span [ ] [ Html.text <| String.left startIdx text ]
-            highlightedEl = span [ class "highlight" ] [ Html.text <| String.slice startIdx endIdx text ]
-            appendElements = if startIdx == 0 then [ highlightedEl ] else [ preEl, highlightedEl ]
-            nextIndices = List.tail indices ? [ ] |> List.map (\i -> i - endIdx)
-        in
-            highlightText (String.dropLeft endIdx text) nextIndices length (elements ++ appendElements)
+                highlightText newText (List.tail indices ? [ ]) highlightLen newElements highlightEllipsis
             
     
 noteEditor : Maybe Note -> (Note -> msg) -> Html msg
