@@ -19,6 +19,7 @@ port authRead : (Value -> msg) -> Sub msg
 
 type Msg
     = OnUserSignInMsg User
+    | OnUserSignedOutMsg
     | NoOpMsg
 
 
@@ -26,6 +27,7 @@ type PortMsgType
     = InvalidMsg
     | EmailPasswordSignInMsg
     | SignOutMsg
+    | SignedOutMsg
     | SignInSuccessMsg
     | ErrorMsg String
 
@@ -68,6 +70,9 @@ processIncoming value =
                         Ok user ->
                             OnUserSignInMsg user
                             
+            SignedOutMsg ->
+                OnUserSignedOutMsg
+                            
             _ ->
                 NoOpMsg
         
@@ -84,6 +89,9 @@ msgToString msg =
         SignInSuccessMsg ->
             "signedIn"
             
+        SignedOutMsg ->
+            "signedOut"
+            
         _ ->
             ""
 
@@ -99,6 +107,9 @@ msgFromString str =
             
         "signOut" ->
             SignOutMsg
+            
+        "signedOut" ->
+            SignedOutMsg
             
         _ ->
             InvalidMsg

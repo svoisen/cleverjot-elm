@@ -13,6 +13,10 @@ function initialize(firebase, elmApp) {
             case EMAIL_PASSWORD_SIGNIN_MSG:
                 handleEmailPasswordSignIn(firebase, elmApp, parsedMessage.credentials);
                 break;
+                
+            case SIGN_OUT_MSG:
+                handleSignOut(firebase, elmApp);
+                break;
         }
     });
     
@@ -48,6 +52,12 @@ function handleEmailPasswordSignIn(firebase, elmApp, credentials) {
         
         writeErrorMessage(elmApp, errorMsg, errorCode);
     });
+}
+
+function handleSignOut(firebase, elmApp) {
+    firebase.auth().signOut();
+    
+    console.log('Signing out ...');
 }
 
 function writeErrorMessage(elmApp, errorMsg, code) {

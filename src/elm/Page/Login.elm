@@ -59,7 +59,7 @@ view model =
 loginForm : Html Msg
 loginForm =
     Html.form [ class "pure-form pure-form-stacked login-form", onSubmit SubmitFormMsg ] 
-        [ h1 [ class "title" ] [ text "Sign in" ]
+        [ h1 [ class "title" ] [ text "Sign in to CleverJot" ]
         , label [ class "form-label", for "email" ] [ text "Email" ]
         , Form.input [ id "email", onInput SetEmailMsg ] []
         , label [ class "form-label", for "password" ] [ text "Password" ]

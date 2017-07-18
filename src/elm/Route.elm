@@ -53,6 +53,7 @@ modifyUrl =
 fromLocation : Location -> Maybe Route
 fromLocation location =
     if String.isEmpty location.hash then
-        Just HomeRoute
+        -- TODO: This should be HomeRoute when ready to server home page
+        Just LoginRoute
     else
         parseHash route location

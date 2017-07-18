@@ -53,7 +53,7 @@ setRoute maybeRoute model =
             { model | currentPage = LoginPage Login.initialModel } => Cmd.none
         
         Just LogoutRoute ->
-            (model, Cmd.none)
+            { model | currentPage = LogoutPage } => FBAuth.signOut
             
         Just HomeRoute ->
             { model | currentPage = HomePage Home.initialModel } => Cmd.none
@@ -115,6 +115,9 @@ updateFromAuth page msg model =
         (FBAuth.OnUserSignInMsg user, LoginPage _) ->
             { model | currentUser = Just user } => Route.modifyUrl NotesRoute
             
+        (FBAuth.OnUserSignedOutMsg, _) ->
+            { model | currentUser = Nothing } => Route.modifyUrl LoginRoute
+            
         (_, _) ->
             model => Cmd.none
             
@@ -157,7 +160,7 @@ viewPage page maybeUser =
                 |> Html.map LoginMsg
             
         LogoutPage ->
-            Html.text ""
+            Html.text "Signing Out ..."
     
 
 view : Model -> Html Msg
